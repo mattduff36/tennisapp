@@ -157,10 +157,19 @@ a {
   padding: var(--space-2) var(--space-3);
 }
 
+.header-brand-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
 .brand {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  min-width: 0;
 }
 
 .brand h1,
@@ -170,6 +179,201 @@ a {
   font-family: var(--font-display);
   letter-spacing: 0.02em;
   text-transform: uppercase;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: 0;
+  border: 1px solid var(--border-muted);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--line);
+  flex: 0 0 auto;
+}
+
+.icon-button:active {
+  transform: scale(0.98);
+}
+
+.text-size-trigger-icon {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+.text-size-dialog {
+  margin: auto;
+  border: none;
+  padding: 0;
+  background: transparent;
+  max-width: calc(100vw - 2rem);
+  color: var(--line);
+}
+
+.text-size-dialog::backdrop {
+  background: rgba(4, 16, 10, 0.72);
+}
+
+.text-size-dialog-panel {
+  width: min(26rem, calc(100vw - 2rem));
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-lg);
+  background: var(--panel-strong);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(4px);
+}
+
+.text-size-dialog-panel h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.text-size-preview {
+  margin: 0;
+  color: rgba(247, 247, 242, 0.82);
+  line-height: 1.4;
+}
+
+.text-size-current {
+  margin: 0;
+  font-weight: 700;
+  color: var(--ball);
+}
+
+.text-size-slider-shell {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--tap);
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  background: rgba(6, 22, 12, 0.72);
+  border: 1px solid var(--border-subtle);
+}
+
+.text-size-end {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  color: rgba(247, 247, 242, 0.78);
+  line-height: 1;
+  user-select: none;
+}
+
+.text-size-end-small {
+  font-size: 0.85rem;
+}
+
+.text-size-end-large {
+  font-size: 1.45rem;
+}
+
+.text-size-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: var(--tap);
+  margin: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  min-height: var(--tap);
+  min-width: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.text-size-slider::-webkit-slider-runnable-track {
+  height: 0.28rem;
+  border-radius: 999px;
+  background: rgba(220, 225, 218, 0.35);
+}
+
+.text-size-slider::-moz-range-track {
+  height: 0.28rem;
+  border-radius: 999px;
+  background: rgba(220, 225, 218, 0.35);
+}
+
+.text-size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: calc((0.28rem - 1.75rem) / 2);
+  border-radius: 999px;
+  background: var(--line);
+  border: 2px solid rgba(8, 34, 18, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.text-size-slider::-moz-range-thumb {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: var(--line);
+  border: 2px solid rgba(8, 34, 18, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.text-size-slider:focus-visible {
+  outline: none;
+}
+
+.text-size-slider:focus-visible::-webkit-slider-thumb {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.text-size-slider:focus-visible::-moz-range-thumb {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.text-size-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.2rem;
+  text-align: center;
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: rgba(247, 247, 242, 0.45);
+}
+
+.text-size-step.is-active {
+  color: var(--ball);
+  font-weight: 700;
+}
+
+.text-size-done {
+  width: 100%;
+  min-width: 0;
+  justify-self: stretch;
 }
 
 .brand h1 {
@@ -693,21 +897,102 @@ a {
 }
 
 @media (max-width: 899px) {
+  /* Shell stays the viewport scrollport; html/body remain overflow:hidden.
+     Board row is auto (not 1fr) so tall court stacks grow scrollHeight. */
   .pegboard-shell {
+    height: 100vh;
+    height: 100dvh;
     overflow: auto;
+    grid-template-rows: auto auto auto;
   }
 
   .stats-ticker {
     display: none;
   }
 
+  .board-stage {
+    height: auto;
+    overflow: visible;
+  }
+
   .board-grid {
-    grid-template-rows: minmax(180px, 0.4fr) minmax(0, 1fr);
+    height: auto;
+    grid-template-rows: auto auto;
+  }
+
+  .board-grid > div:first-child,
+  .waiting-bounce,
+  .courts-column,
+  .courts-grid,
+  .courts-grid > * {
+    height: auto;
+  }
+
+  .waiting-zone {
+    height: auto;
+    max-height: min(40vh, 20rem);
+    overflow: auto;
   }
 
   .courts-grid {
     grid-template-columns: 1fr;
-    grid-auto-rows: minmax(160px, 1fr);
+    grid-auto-rows: auto;
+  }
+
+  .court-zone {
+    height: auto;
+    overflow: visible;
+  }
+
+  .zone {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .player-list {
+    gap: var(--space-2);
+  }
+
+  .player-tile {
+    padding: var(--space-2);
+  }
+
+  .player-hint {
+    display: none;
+  }
+
+  .player-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .on-court-heading p {
+    display: none;
+  }
+
+  html[data-text-size="large"] .zone,
+  html[data-text-size="largest"] .zone {
+    padding: var(--space-2);
+    gap: var(--space-2);
+  }
+
+  html[data-text-size="large"] .player-list,
+  html[data-text-size="largest"] .player-list {
+    gap: var(--space-1);
+  }
+
+  html[data-text-size="large"] .player-tile,
+  html[data-text-size="largest"] .player-tile {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  html[data-text-size="large"] .board-grid,
+  html[data-text-size="largest"] .board-grid,
+  html[data-text-size="large"] .courts-grid,
+  html[data-text-size="largest"] .courts-grid {
+    gap: var(--space-3);
   }
 }
 

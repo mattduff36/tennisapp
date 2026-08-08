@@ -50,7 +50,7 @@ export function CourtCard({
 
       {isIncomplete ? (
         <p className="status-pill warning" role="status">
-          Incomplete — needs another player
+          Needs player
         </p>
       ) : null}
 
@@ -71,7 +71,7 @@ export function CourtCard({
             : `Place selected player on Court ${courtId}`
         }
       >
-        {isFull ? "Court full" : "Drop / Place here"}
+        {isFull ? "Court full" : "Place here"}
       </button>
 
       {players.length === 0 ? (

@@ -27,7 +27,7 @@ test("ASSIGN / RETURN / incomplete / capacity flows", async ({ page }) => {
     .click();
   await page.getByRole("button", { name: "Place selected player on Court 1" }).click();
 
-  await expect(page.getByText("Incomplete — needs another player")).toBeVisible();
+  await expect(page.getByText("Needs player")).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Drag Ada back to Waiting, or tap to return" }),
   ).toBeVisible();
@@ -36,7 +36,7 @@ test("ASSIGN / RETURN / incomplete / capacity flows", async ({ page }) => {
     .getByRole("button", { name: "Drag Bea onto a court, or tap to select" })
     .click();
   await page.getByRole("button", { name: "Place selected player on Court 1" }).click();
-  await expect(page.getByText("Incomplete — needs another player")).toHaveCount(0);
+  await expect(page.getByText("Needs player")).toHaveCount(0);
 
   for (const name of ["Cara", "Dee"]) {
     await page.getByLabel("Add player").fill(name);
@@ -134,4 +134,42 @@ test("PERSIST refresh keeps board state", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Drag Persisted back to Waiting, or tap to return" }),
   ).toBeVisible();
+});
+
+test("TEXT-SIZE: modal slider persists and keeps 48px targets", async ({ page }) => {
+  await openFreshBoard(page);
+
+  const trigger = page.getByRole("button", { name: "Text size" });
+  await expect(trigger).toBeVisible();
+  const triggerBox = await trigger.boundingBox();
+  expect(triggerBox?.height ?? 0).toBeGreaterThanOrEqual(48);
+
+  await trigger.click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("heading", { name: "Text size" })).toBeVisible();
+
+  const slider = page.getByLabel("Choose text size");
+  const sliderBox = await slider.boundingBox();
+  expect(sliderBox?.height ?? 0).toBeGreaterThanOrEqual(48);
+
+  await slider.fill("4");
+  await expect(dialog.locator(".text-size-current")).toHaveText("Largest");
+  await expect
+    .poll(async () => page.locator("html").getAttribute("data-text-size"))
+    .toBe("largest");
+
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await expect(dialog).toBeHidden();
+
+  await page.reload();
+  await expect
+    .poll(async () => page.locator("html").getAttribute("data-text-size"))
+    .toBe("largest");
+
+  await page.getByRole("button", { name: "Text size" }).click();
+  await expect(page.getByRole("dialog").locator(".text-size-current")).toHaveText(
+    "Largest",
+  );
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toBeHidden();
 });

@@ -6,10 +6,12 @@ import { DragGhost } from "./components/drag-ghost";
 import { PlayerManager } from "./components/player-manager";
 import { StatsTicker } from "./components/stats-ticker";
 import { StatusBar } from "./components/status-bar";
+import { TextSizeControl } from "./components/text-size-control";
 import { WaitingList } from "./components/waiting-list";
 import { usePlayerDrag } from "./drag/use-player-drag";
 import { TennisBall } from "./graphics/tennis-ball";
 import { usePegboard } from "./hooks/use-pegboard";
+import { useTextSize } from "./hooks/use-text-size";
 
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -27,6 +29,7 @@ function usePrefersReducedMotion(): boolean {
 
 export function PegboardApp() {
   const pegboard = usePegboard();
+  const { textSize, setTextSize } = useTextSize();
   const prefersReducedMotion = usePrefersReducedMotion();
   const [animatingCourtId, setAnimatingCourtId] = useState<number | null>(null);
   const [waitingPulse, setWaitingPulse] = useState(false);
@@ -135,12 +138,15 @@ export function PegboardApp() {
   return (
     <div className={`pegboard-shell${drag.isDragging ? " is-dragging" : ""}`}>
       <header className="app-header">
-        <div className="brand">
-          <TennisBall className="brand-ball" />
-          <div>
-            <p className="scoreboard-label">Club pegboard</p>
-            <h1>Tennis Court Board</h1>
+        <div className="header-brand-block">
+          <div className="brand">
+            <TennisBall className="brand-ball" />
+            <div>
+              <p className="scoreboard-label">Club pegboard</p>
+              <h1>Tennis Court Board</h1>
+            </div>
           </div>
+          <TextSizeControl textSize={textSize} onChange={setTextSize} />
         </div>
         <PlayerManager
           disabled={!pegboard.canInteract}
