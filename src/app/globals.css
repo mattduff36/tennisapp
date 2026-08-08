@@ -398,10 +398,42 @@ a {
   animation: ball-pulse var(--motion-med) ease;
 }
 
+.player-tile.is-dragging {
+  opacity: 0.35;
+}
+
+.zone.is-drop-target {
+  box-shadow:
+    0 0 0 3px var(--ball),
+    var(--shadow);
+}
+
+.pegboard-shell.is-dragging {
+  user-select: none;
+}
+
+.drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  pointer-events: none;
+  padding: 0.55rem 0.85rem;
+  border: 2px solid var(--ball);
+  border-radius: var(--radius-md);
+  background: rgba(8, 34, 18, 0.92);
+  box-shadow: var(--shadow);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .player-main {
   width: 100%;
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--space-2);
   border: none;
@@ -411,10 +443,12 @@ a {
   text-align: left;
   padding: 0.2rem;
   min-height: var(--tap);
+  touch-action: none;
+  cursor: grab;
 }
 
-.court-player .player-main {
-  grid-template-columns: auto 1fr auto;
+.player-main:active {
+  cursor: grabbing;
 }
 
 .player-name {

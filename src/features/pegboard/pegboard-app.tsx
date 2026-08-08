@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { CourtCard } from "./components/court-card";
+import { DragGhost } from "./components/drag-ghost";
 import { PlayerManager } from "./components/player-manager";
 import { StatusBar } from "./components/status-bar";
 import { WaitingList } from "./components/waiting-list";
+import { usePlayerDrag } from "./drag/use-player-drag";
 import { CourtMarkings } from "./graphics/court-markings";
 import { TennisBall } from "./graphics/tennis-ball";
 import { usePegboard } from "./hooks/use-pegboard";
@@ -29,13 +31,14 @@ export function PegboardApp() {
   const [animatingCourtId, setAnimatingCourtId] = useState<number | null>(null);
   const [waitingPulse, setWaitingPulse] = useState(false);
 
-  const handleAssign = useCallback(
-    (courtId: 1 | 2 | 3) => {
-      const changed = pegboard.assignSelectedToCourt(courtId);
+  const handleAssignPlayer = useCallback(
+    (playerId: string, courtId: 1 | 2 | 3) => {
+      const changed = pegboard.assignPlayerToCourt(playerId, courtId);
       if (changed && !prefersReducedMotion) {
         setAnimatingCourtId(courtId);
         window.setTimeout(() => setAnimatingCourtId(null), 420);
       }
+      return changed;
     },
     [pegboard, prefersReducedMotion],
   );
@@ -49,6 +52,46 @@ export function PegboardApp() {
       }
     },
     [pegboard, prefersReducedMotion],
+  );
+
+  const drag = usePlayerDrag({
+    disabled: !pegboard.canInteract,
+    onDropToCourt: handleAssignPlayer,
+    onDropToWaiting: handleReturn,
+  });
+
+  const handleAssignSelected = useCallback(
+    (courtId: 1 | 2 | 3) => {
+      if (drag.shouldSuppressClick()) {
+        return;
+      }
+      const changed = pegboard.assignSelectedToCourt(courtId);
+      if (changed && !prefersReducedMotion) {
+        setAnimatingCourtId(courtId);
+        window.setTimeout(() => setAnimatingCourtId(null), 420);
+      }
+    },
+    [drag, pegboard, prefersReducedMotion],
+  );
+
+  const handleSelect = useCallback(
+    (playerId: string) => {
+      if (drag.shouldSuppressClick()) {
+        return;
+      }
+      pegboard.selectWaitingPlayer(playerId);
+    },
+    [drag, pegboard],
+  );
+
+  const handleReturnClick = useCallback(
+    (playerId: string) => {
+      if (drag.shouldSuppressClick()) {
+        return;
+      }
+      handleReturn(playerId);
+    },
+    [drag, handleReturn],
   );
 
   const handleRename = useCallback(
@@ -85,8 +128,12 @@ export function PegboardApp() {
     void pegboard.resetLocalBoard();
   }, [pegboard]);
 
+  const hoverCourtId =
+    drag.hoverTarget?.kind === "court" ? drag.hoverTarget.courtId : null;
+  const hoverWaiting = drag.hoverTarget?.kind === "waiting";
+
   return (
-    <div className="pegboard-shell">
+    <div className={`pegboard-shell${drag.isDragging ? " is-dragging" : ""}`}>
       <header className="app-header">
         <div className="brand">
           <TennisBall className="brand-ball" />
@@ -122,16 +169,19 @@ export function PegboardApp() {
               players={pegboard.waitingPlayers}
               selectedPlayerId={pegboard.selectedPlayerId}
               disabled={!pegboard.canInteract}
-              onSelect={pegboard.selectWaitingPlayer}
+              dropActive={hoverWaiting}
+              draggingPlayerId={drag.session?.playerId ?? null}
+              onSelect={handleSelect}
               onRename={handleRename}
               onDelete={handleDelete}
+              onDragStart={drag.beginPointerDrag}
             />
           </div>
 
           <div className="courts-column" aria-label="On Court">
             <div className="on-court-heading">
               <h2>On Court</h2>
-              <p>Three courts · 2–4 players preferred · 1 marked incomplete</p>
+              <p>Drag players onto a court · 2–4 preferred · 1 marked incomplete</p>
             </div>
             <div className="courts-grid">
               {pegboard.courts.map((court) => (
@@ -147,9 +197,14 @@ export function PegboardApp() {
                     isIncomplete={court.isIncomplete}
                     isFull={court.isFull}
                     disabled={!pegboard.canInteract}
-                    canReceive={Boolean(pegboard.selectedPlayerId) && !court.isFull}
-                    onAssign={handleAssign}
-                    onReturn={handleReturn}
+                    canReceive={
+                      Boolean(pegboard.selectedPlayerId) && !court.isFull
+                    }
+                    dropActive={hoverCourtId === court.courtId}
+                    draggingPlayerId={drag.session?.playerId ?? null}
+                    onAssign={handleAssignSelected}
+                    onReturn={handleReturnClick}
+                    onDragStart={drag.beginPointerDrag}
                   />
                 </div>
               ))}
@@ -157,6 +212,8 @@ export function PegboardApp() {
           </div>
         </div>
       </div>
+
+      {drag.session ? <DragGhost session={drag.session} /> : null}
     </div>
   );
 }

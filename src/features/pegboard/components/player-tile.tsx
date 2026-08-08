@@ -1,43 +1,68 @@
 "use client";
 
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { TennisBall } from "../graphics/tennis-ball";
+import type { DragOrigin } from "../drag/player-drag";
 
 export function PlayerTile({
+  playerId,
   name,
   selected = false,
   onSelect,
   onReturn,
   onRename,
   onDelete,
+  onDragStart,
   disabled = false,
+  dragging = false,
   mode,
 }: {
+  playerId: string;
   name: string;
   selected?: boolean;
   onSelect?: () => void;
   onReturn?: () => void;
   onRename?: () => void;
   onDelete?: () => void;
+  onDragStart?: (
+    event: ReactPointerEvent,
+    player: { id: string; name: string; origin: DragOrigin },
+  ) => void;
   disabled?: boolean;
+  dragging?: boolean;
   mode: "waiting" | "court";
 }) {
+  function handlePointerDown(event: ReactPointerEvent) {
+    onDragStart?.(event, {
+      id: playerId,
+      name,
+      origin: mode,
+    });
+  }
+
   if (mode === "waiting") {
     return (
-      <div className={`player-tile${selected ? " is-selected" : ""}`}>
+      <div
+        className={`player-tile${selected ? " is-selected" : ""}${
+          dragging ? " is-dragging" : ""
+        }`}
+      >
         <button
           type="button"
           className="player-main"
           onClick={onSelect}
+          onPointerDown={handlePointerDown}
           disabled={disabled}
           aria-pressed={selected}
           aria-label={
             selected
-              ? `${name}, selected. Tap a court to place, or tap again to clear.`
-              : `Select ${name} from Waiting`
+              ? `${name}, selected. Drag onto a court, or tap a court to place.`
+              : `Drag ${name} onto a court, or tap to select`
           }
         >
           <TennisBall className="player-ball" />
           <span className="player-name">{name}</span>
+          <span className="player-hint">Drag to court</span>
         </button>
         <div className="player-actions">
           <button
@@ -64,17 +89,18 @@ export function PlayerTile({
   }
 
   return (
-    <div className="player-tile court-player">
+    <div className={`player-tile court-player${dragging ? " is-dragging" : ""}`}>
       <button
         type="button"
         className="player-main"
         onClick={onReturn}
+        onPointerDown={handlePointerDown}
         disabled={disabled}
-        aria-label={`Return ${name} to Waiting`}
+        aria-label={`Drag ${name} back to Waiting, or tap to return`}
       >
         <TennisBall className="player-ball" />
         <span className="player-name">{name}</span>
-        <span className="player-hint">Tap to Waiting</span>
+        <span className="player-hint">Drag to Waiting</span>
       </button>
     </div>
   );

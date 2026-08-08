@@ -99,6 +99,24 @@ describe("board reducer", () => {
     expect(isCourtIncomplete(filled, 3)).toBe(false);
   });
 
+  it("ASSIGN allows moving a player from one court to another", () => {
+    const seeded = withPlayers([
+      {
+        id: "p1",
+        name: "Ada",
+        location: { kind: "court", courtId: 1 },
+      },
+    ]);
+    const moved = reduceBoard(seeded, {
+      type: "ASSIGN_TO_COURT",
+      playerId: "p1",
+      courtId: 2,
+    });
+    expect(moved.changed).toBe(true);
+    expect(getCourtPlayers(moved.state, 1)).toHaveLength(0);
+    expect(getCourtPlayers(moved.state, 2).map((p) => p.name)).toEqual(["Ada"]);
+  });
+
   it("RETURN-01: on-court player returns to waiting", () => {
     const seeded = withPlayers([
       {

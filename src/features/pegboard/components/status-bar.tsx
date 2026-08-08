@@ -37,7 +37,7 @@ export function StatusBar({
         <div>
           <p className="scoreboard-label">Selected</p>
           <p className="selection-value">
-            {selectedPlayerName ?? "Tap a waiting player"}
+            {selectedPlayerName ?? "Drag a player, or tap to select"}
           </p>
         </div>
       </div>

@@ -43,6 +43,7 @@ export type PegboardController = {
   renamePlayer: (playerId: string, name: string) => void;
   deletePlayer: (playerId: string) => void;
   assignSelectedToCourt: (courtId: CourtId) => boolean;
+  assignPlayerToCourt: (playerId: string, courtId: CourtId) => boolean;
   returnToWaiting: (playerId: string) => void;
   resetLocalBoard: () => Promise<void>;
   dismissNotice: () => void;
@@ -190,7 +191,7 @@ export function usePegboard(
       setNotice(
         playerId === selectedPlayerId
           ? null
-          : `${player.name} selected. Tap a court to place them.`,
+          : `${player.name} selected. Drag or tap a court to place them.`,
       );
     },
     [board, selectedPlayerId],
@@ -222,14 +223,8 @@ export function usePegboard(
     [applyAction],
   );
 
-  const assignSelectedToCourt = useCallback(
-    (courtId: CourtId) => {
-      if (!selectedPlayerId) {
-        setNotice("Tap a waiting player first, then tap a court.");
-        return false;
-      }
-
-      const playerId = selectedPlayerId;
+  const assignPlayerToCourt = useCallback(
+    (playerId: string, courtId: CourtId) => {
       const result = reduceBoard(board, {
         type: "ASSIGN_TO_COURT",
         playerId,
@@ -246,7 +241,19 @@ export function usePegboard(
       setSelectedPlayerId(null);
       return true;
     },
-    [board, selectedPlayerId],
+    [board],
+  );
+
+  const assignSelectedToCourt = useCallback(
+    (courtId: CourtId) => {
+      if (!selectedPlayerId) {
+        setNotice("Drag a player onto a court, or tap one first.");
+        return false;
+      }
+
+      return assignPlayerToCourt(selectedPlayerId, courtId);
+    },
+    [assignPlayerToCourt, selectedPlayerId],
   );
 
   const returnToWaiting = useCallback(
@@ -310,6 +317,7 @@ export function usePegboard(
     renamePlayer,
     deletePlayer,
     assignSelectedToCourt,
+    assignPlayerToCourt,
     returnToWaiting,
     resetLocalBoard,
     dismissNotice,

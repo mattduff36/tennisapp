@@ -117,11 +117,14 @@ export function reduceBoard(
     case "ASSIGN_TO_COURT": {
       const player = findPlayer(state, action.playerId);
       if (!player) {
-        return unchanged(state, "Select a waiting player first.");
+        return unchanged(state, "That player is no longer on the board.");
       }
 
-      if (player.location.kind !== "waiting") {
-        return unchanged(state, `${player.name} is already on a court.`);
+      if (
+        player.location.kind === "court" &&
+        player.location.courtId === action.courtId
+      ) {
+        return unchanged(state);
       }
 
       if (isCourtFull(state, action.courtId)) {
