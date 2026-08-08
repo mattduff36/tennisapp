@@ -5,8 +5,9 @@
   --line: #f7f7f2;
   --ink: #102418;
   --ink-soft: rgba(16, 36, 24, 0.78);
-  --panel: rgba(10, 42, 22, 0.55);
+  --panel: rgba(10, 42, 22, 0.48);
   --panel-strong: rgba(8, 34, 18, 0.78);
+  --panel-court: rgba(6, 30, 16, 0.72);
   --ball: #d8f35c;
   --ball-seam: #f8fff0;
   --ball-shadow: #6f8d1f;
@@ -15,7 +16,11 @@
   --danger: #ffb4a8;
   --net-fill: rgba(8, 28, 16, 0.45);
   --focus: #fff36d;
+  --border-subtle: rgba(220, 225, 218, 0.28);
+  --border-muted: rgba(220, 225, 218, 0.4);
+  --border-strong: rgba(247, 247, 242, 0.72);
   --shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  --shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.18);
   --radius-lg: 22px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -67,7 +72,7 @@ input {
 button {
   min-height: var(--tap);
   min-width: var(--tap);
-  border: 2px solid var(--line);
+  border: 1px solid var(--border-muted);
   border-radius: 999px;
   background: transparent;
   color: var(--line);
@@ -89,10 +94,10 @@ input:focus-visible {
 input {
   min-height: var(--tap);
   width: 100%;
-  border: 2px solid var(--line);
+  border: 1px solid var(--border-muted);
   border-radius: 999px;
   padding: 0 1rem;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--line);
 }
 
@@ -117,14 +122,33 @@ a {
 }
 
 .app-header,
-.status-bar,
-.zone,
-.on-court-heading {
+.status-bar {
   background: var(--panel);
-  border: 2px solid var(--line);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  box-shadow: none;
   backdrop-filter: blur(2px);
+}
+
+.zone {
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-height: 0;
+  background: var(--panel-strong);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(2px);
+}
+
+.on-court-heading {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .app-header {
@@ -163,10 +187,10 @@ a {
 
 .scoreboard-label {
   margin: 0;
-  font-size: 0.78rem;
-  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: rgba(255, 247, 194, 0.72);
 }
 
 .player-manager {
@@ -192,12 +216,14 @@ a {
   min-height: var(--tap);
   padding: 0 0.9rem;
   font-size: 0.92rem;
-  background: rgba(255, 255, 255, 0.08);
+  background: transparent;
+  border-color: transparent;
+  color: rgba(247, 247, 242, 0.78);
 }
 
 .chip-button.danger {
-  border-color: var(--danger);
-  color: var(--danger);
+  border-color: transparent;
+  color: rgba(255, 180, 168, 0.85);
 }
 
 .status-bar {
@@ -205,6 +231,14 @@ a {
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
   align-items: center;
+}
+
+.status-bar .chip-button.danger {
+  justify-self: start;
+  font-size: 0.85rem;
+  color: rgba(255, 180, 168, 0.72);
+  border: 1px solid rgba(255, 180, 168, 0.35);
+  background: transparent;
 }
 
 .selection-panel,
@@ -261,18 +295,9 @@ a {
 .courts-column {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--space-4);
+  gap: var(--space-3);
   min-height: 0;
   height: 100%;
-}
-
-.zone {
-  padding: var(--space-4);
-  display: grid;
-  gap: var(--space-4);
-  align-content: start;
-  background: var(--panel-strong);
-  min-height: 0;
 }
 
 .zone-header {
@@ -282,10 +307,15 @@ a {
   gap: var(--space-2);
 }
 
+.zone-header h2 {
+  font-size: clamp(1.15rem, 1.8vw, 1.45rem);
+}
+
 .zone-count {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: 1.15rem;
+  color: rgba(247, 247, 242, 0.82);
 }
 
 .board-grid > div:first-child,
@@ -297,16 +327,23 @@ a {
 .waiting-zone {
   height: 100%;
   overflow: auto;
+  background: rgba(8, 34, 18, 0.68);
 }
 
 .on-court-heading {
-  padding: var(--space-2) var(--space-3);
+  padding: 0 var(--space-1);
   margin-bottom: 0;
+}
+
+.on-court-heading h2 {
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  color: rgba(247, 247, 242, 0.9);
 }
 
 .on-court-heading p {
   margin-top: var(--space-1);
-  color: rgba(247, 247, 242, 0.82);
+  color: rgba(247, 247, 242, 0.62);
+  font-size: 0.9rem;
 }
 
 .courts-grid {
@@ -325,23 +362,58 @@ a {
   position: relative;
   overflow: auto;
   height: 100%;
+  background: var(--panel-court);
+  border-color: var(--border-muted);
 }
 
 .court-zone.can-receive {
+  border-color: var(--ball);
   box-shadow:
-    0 0 0 3px var(--ball),
-    var(--shadow);
+    0 0 0 2px rgba(216, 243, 92, 0.55),
+    var(--shadow-soft);
 }
 
 .court-zone.is-incomplete {
   border-color: var(--warning);
 }
 
+.court-zone.is-full {
+  border-color: var(--border-subtle);
+}
+
 .court-target {
   justify-self: start;
   padding: 0 1.2rem;
-  background: rgba(216, 243, 92, 0.16);
+  background: transparent;
+  border-color: var(--border-subtle);
+  color: rgba(247, 247, 242, 0.55);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.court-zone:not(.can-receive):not(.is-drop-target) .court-target {
+  color: rgba(247, 247, 242, 0.45);
+  border-color: rgba(220, 225, 218, 0.18);
+  background: transparent;
+}
+
+.court-zone:not(.can-receive):not(.is-drop-target) .empty-copy {
+  color: rgba(247, 247, 242, 0.45);
+}
+
+.court-zone.can-receive .court-target,
+.court-zone.is-drop-target .court-target {
+  opacity: 1;
+  background: rgba(216, 243, 92, 0.18);
+  border-color: var(--ball);
+  color: var(--line);
   font-weight: 700;
+}
+
+.court-zone.can-receive .empty-copy,
+.court-zone.is-drop-target .empty-copy {
+  opacity: 1;
+  color: rgba(247, 247, 242, 0.82);
 }
 
 .status-pill {
@@ -358,7 +430,7 @@ a {
 }
 
 .status-pill.muted {
-  color: rgba(247, 247, 242, 0.75);
+  color: rgba(247, 247, 242, 0.65);
 }
 
 .player-list {
@@ -374,14 +446,15 @@ a {
   display: grid;
   gap: var(--space-1);
   padding: var(--space-3);
-  border: 2px solid rgba(247, 247, 242, 0.55);
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .player-tile.is-selected {
   border-color: var(--ball);
-  background: rgba(216, 243, 92, 0.14);
+  background: rgba(216, 243, 92, 0.16);
+  box-shadow: 0 0 0 1px rgba(216, 243, 92, 0.35);
   animation: ball-pulse var(--motion-med) ease;
 }
 
@@ -389,10 +462,22 @@ a {
   opacity: 0.35;
 }
 
+.player-tile.court-player {
+  background: rgba(216, 243, 92, 0.08);
+  border-color: rgba(216, 243, 92, 0.22);
+}
+
+.player-tile.court-player .player-name {
+  font-size: clamp(1.2rem, 1.8vw, 1.45rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
 .zone.is-drop-target {
+  border-color: var(--ball);
   box-shadow:
-    0 0 0 3px var(--ball),
-    var(--shadow);
+    0 0 0 2px rgba(216, 243, 92, 0.55),
+    var(--shadow-soft);
 }
 
 .pegboard-shell.is-dragging {
@@ -430,6 +515,7 @@ a {
   text-align: left;
   padding: 0.2rem;
   min-height: var(--tap);
+  min-width: 0;
   touch-action: none;
   cursor: grab;
 }
@@ -444,15 +530,34 @@ a {
 }
 
 .player-hint {
-  font-size: 0.82rem;
-  color: var(--accent);
+  font-size: 0.75rem;
+  color: rgba(255, 247, 194, 0.55);
   white-space: nowrap;
+}
+
+.player-tile.is-selected .player-hint {
+  color: rgba(255, 247, 194, 0.9);
 }
 
 .player-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1);
+}
+
+.player-actions .chip-button {
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: 0 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: rgba(247, 247, 242, 0.62);
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.player-actions .chip-button.danger {
+  color: rgba(255, 180, 168, 0.72);
 }
 
 .court-bounce,
@@ -488,10 +593,11 @@ a {
   display: none;
   min-height: 0;
   overflow: hidden;
-  border: 2px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--panel-strong);
-  box-shadow: var(--shadow);
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: rgba(8, 34, 18, 0.55);
+  box-shadow: none;
 }
 
 .stats-ticker-viewport {
@@ -516,28 +622,37 @@ a {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: 0.65rem var(--space-3);
+  padding: 0.5rem var(--space-3);
   white-space: nowrap;
 }
 
 .stats-ticker-item {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
+}
+
+.stats-ticker-sep {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: rgba(216, 243, 92, 0.35);
+  flex: 0 0 auto;
 }
 
 .stats-ticker-text {
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: rgba(255, 247, 194, 0.68);
 }
 
 .stats-ticker-ball {
-  width: 1.05rem;
-  height: 1.05rem;
+  width: 0.85rem;
+  height: 0.85rem;
   flex: 0 0 auto;
+  opacity: 0.55;
 }
 
 @keyframes ticker-scroll {

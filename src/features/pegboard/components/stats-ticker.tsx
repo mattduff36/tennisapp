@@ -12,9 +12,7 @@ function TickerTrack({ segments }: { segments: string[] }) {
     <div className="stats-ticker-track">
       {segments.map((segment, index) => (
         <span key={`${segment}-${index}`} className="stats-ticker-item">
-          {index > 0 ? (
-            <TennisBall className="stats-ticker-ball" decorative />
-          ) : null}
+          {index > 0 ? <span className="stats-ticker-sep" aria-hidden="true" /> : null}
           <span className="stats-ticker-text">{segment}</span>
         </span>
       ))}
