@@ -5,7 +5,14 @@ import { createSaveQueue } from "./save-queue";
 
 function board(name: string): BoardState {
   return {
-    players: [{ id: name, name, location: { kind: "waiting" } }],
+    players: [
+      {
+        id: name,
+        name,
+        location: { kind: "waiting" },
+        locationEnteredAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
   };
 }
 

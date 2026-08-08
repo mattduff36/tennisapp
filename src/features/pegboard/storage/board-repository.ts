@@ -1,8 +1,14 @@
-import type { BoardState, PersistedBoardV1 } from "../model/board";
+import type { BoardState, PersistedBoardV2 } from "../model/board";
 
 export type LoadBoardResult =
   | { status: "empty" }
-  | { status: "ok"; board: BoardState; snapshot: PersistedBoardV1 }
+  | {
+      status: "ok";
+      board: BoardState;
+      snapshot: PersistedBoardV2;
+      /** Set when a historical v1 snapshot was migrated in-memory to v2. */
+      migratedFromVersion?: 1;
+    }
   | { status: "corrupt"; reason: string }
   | { status: "unsupported"; version: number };
 

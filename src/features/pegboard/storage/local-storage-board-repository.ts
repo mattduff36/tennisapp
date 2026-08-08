@@ -1,9 +1,13 @@
 import {
   BOARD_SCHEMA_VERSION,
+  BOARD_SCHEMA_VERSION_V1,
   isCourtId,
+  isValidLocationEnteredAt,
+  nowIso,
   type BoardState,
-  type PersistedBoardV1,
+  type PersistedBoardV2,
   type Player,
+  type PlayerLocation,
 } from "../model/board";
 import type { BoardRepository, LoadBoardResult } from "./board-repository";
 
@@ -13,7 +17,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function parsePlayer(value: unknown): Player | null {
+function parseLocation(value: unknown): PlayerLocation | null {
+  if (!isRecord(value) || typeof value.kind !== "string") {
+    return null;
+  }
+
+  if (value.kind === "waiting") {
+    return { kind: "waiting" };
+  }
+
+  if (value.kind === "court" && isCourtId(value.courtId)) {
+    return { kind: "court", courtId: value.courtId };
+  }
+
+  return null;
+}
+
+function parsePlayerV1(
+  value: unknown,
+  locationEnteredAt: string,
+): Player | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -26,30 +49,79 @@ function parsePlayer(value: unknown): Player | null {
     return null;
   }
 
-  if (!isRecord(value.location) || typeof value.location.kind !== "string") {
+  const location = parseLocation(value.location);
+  if (!location) {
     return null;
   }
 
-  if (value.location.kind === "waiting") {
-    return {
-      id: value.id,
-      name: value.name.trim(),
-      location: { kind: "waiting" },
-    };
+  return {
+    id: value.id,
+    name: value.name.trim(),
+    location,
+    locationEnteredAt,
+  };
+}
+
+function parsePlayerV2(value: unknown): Player | null {
+  if (!isRecord(value)) {
+    return null;
   }
 
-  if (value.location.kind === "court" && isCourtId(value.location.courtId)) {
-    return {
-      id: value.id,
-      name: value.name.trim(),
-      location: { kind: "court", courtId: value.location.courtId },
-    };
+  if (typeof value.id !== "string" || value.id.length === 0) {
+    return null;
+  }
+
+  if (typeof value.name !== "string" || value.name.trim().length === 0) {
+    return null;
+  }
+
+  if (!isValidLocationEnteredAt(value.locationEnteredAt)) {
+    return null;
+  }
+
+  const location = parseLocation(value.location);
+  if (!location) {
+    return null;
+  }
+
+  return {
+    id: value.id,
+    name: value.name.trim(),
+    location,
+    locationEnteredAt: value.locationEnteredAt,
+  };
+}
+
+function validatePlayerSet(players: Player[]): string | null {
+  const ids = new Set<string>();
+  const courtCounts = new Map<number, number>([
+    [1, 0],
+    [2, 0],
+    [3, 0],
+  ]);
+
+  for (const player of players) {
+    if (ids.has(player.id)) {
+      return "Stored board contains duplicate player ids.";
+    }
+    ids.add(player.id);
+
+    if (player.location.kind === "court") {
+      const next = (courtCounts.get(player.location.courtId) ?? 0) + 1;
+      if (next > 4) {
+        return `Court ${player.location.courtId} exceeds capacity.`;
+      }
+      courtCounts.set(player.location.courtId, next);
+    }
   }
 
   return null;
 }
 
-export function parsePersistedBoard(raw: string): LoadBoardResult {
+export function parsePersistedBoard(
+  raw: string,
+  now: Date = new Date(),
+): LoadBoardResult {
   let parsed: unknown;
 
   try {
@@ -70,7 +142,10 @@ export function parsePersistedBoard(raw: string): LoadBoardResult {
     return { status: "unsupported", version: parsed.version };
   }
 
-  if (parsed.version !== BOARD_SCHEMA_VERSION) {
+  if (
+    parsed.version !== BOARD_SCHEMA_VERSION &&
+    parsed.version !== BOARD_SCHEMA_VERSION_V1
+  ) {
     return {
       status: "corrupt",
       reason: `Unsupported legacy board version ${parsed.version}.`,
@@ -81,40 +156,33 @@ export function parsePersistedBoard(raw: string): LoadBoardResult {
     return { status: "corrupt", reason: "Stored board players must be an array." };
   }
 
+  const migratedFromVersion =
+    parsed.version === BOARD_SCHEMA_VERSION_V1 ? (1 as const) : undefined;
+  const migrationNow = nowIso(now);
   const players: Player[] = [];
-  const ids = new Set<string>();
-  const courtCounts = new Map<number, number>([
-    [1, 0],
-    [2, 0],
-    [3, 0],
-  ]);
 
   for (const item of parsed.players) {
-    const player = parsePlayer(item);
+    const player =
+      migratedFromVersion === 1
+        ? parsePlayerV1(item, migrationNow)
+        : parsePlayerV2(item);
+
     if (!player) {
-      return { status: "corrupt", reason: "Stored board contains an invalid player." };
-    }
-
-    if (ids.has(player.id)) {
-      return { status: "corrupt", reason: "Stored board contains duplicate player ids." };
-    }
-    ids.add(player.id);
-
-    if (player.location.kind === "court") {
-      const next = (courtCounts.get(player.location.courtId) ?? 0) + 1;
-      if (next > 4) {
-        return {
-          status: "corrupt",
-          reason: `Court ${player.location.courtId} exceeds capacity.`,
-        };
-      }
-      courtCounts.set(player.location.courtId, next);
+      return {
+        status: "corrupt",
+        reason: "Stored board contains an invalid player.",
+      };
     }
 
     players.push(player);
   }
 
-  const snapshot: PersistedBoardV1 = {
+  const validationError = validatePlayerSet(players);
+  if (validationError) {
+    return { status: "corrupt", reason: validationError };
+  }
+
+  const snapshot: PersistedBoardV2 = {
     version: BOARD_SCHEMA_VERSION,
     players,
   };
@@ -123,10 +191,11 @@ export function parsePersistedBoard(raw: string): LoadBoardResult {
     status: "ok",
     board: { players: [...players] },
     snapshot,
+    ...(migratedFromVersion === 1 ? { migratedFromVersion } : {}),
   };
 }
 
-export function serializeBoard(board: BoardState): PersistedBoardV1 {
+export function serializeBoard(board: BoardState): PersistedBoardV2 {
   return {
     version: BOARD_SCHEMA_VERSION,
     players: board.players.map((player) => ({
@@ -136,6 +205,7 @@ export function serializeBoard(board: BoardState): PersistedBoardV1 {
         player.location.kind === "waiting"
           ? { kind: "waiting" }
           : { kind: "court", courtId: player.location.courtId },
+      locationEnteredAt: player.locationEnteredAt,
     })),
   };
 }

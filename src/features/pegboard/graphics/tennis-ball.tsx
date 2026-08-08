@@ -1,16 +1,19 @@
 export function TennisBall({
   className,
   title = "Tennis ball",
+  decorative = false,
 }: {
   className?: string;
   title?: string;
+  decorative?: boolean;
 }) {
   return (
     <svg
       className={className}
       viewBox="0 0 64 64"
-      role="img"
-      aria-label={title}
+      role={decorative ? "presentation" : "img"}
+      aria-hidden={decorative ? true : undefined}
+      aria-label={decorative ? undefined : title}
       focusable="false"
     >
       <circle cx="32" cy="32" r="28" fill="var(--ball)" />

@@ -1,6 +1,7 @@
 import {
   COURT_CAPACITY,
   COURT_IDS,
+  isValidLocationEnteredAt,
   type BoardState,
   type CourtId,
   type Player,
@@ -51,6 +52,10 @@ export function everyPlayerHasOneLocation(state: BoardState): boolean {
       return false;
     }
     ids.add(player.id);
+
+    if (!isValidLocationEnteredAt(player.locationEnteredAt)) {
+      return false;
+    }
 
     if (player.location.kind === "waiting") {
       continue;

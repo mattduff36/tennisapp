@@ -2,7 +2,8 @@ export type CourtId = 1 | 2 | 3;
 
 export const COURT_IDS: readonly CourtId[] = [1, 2, 3];
 export const COURT_CAPACITY = 4;
-export const BOARD_SCHEMA_VERSION = 1 as const;
+export const BOARD_SCHEMA_VERSION = 2 as const;
+export const BOARD_SCHEMA_VERSION_V1 = 1 as const;
 
 export interface PlayerLocationWaiting {
   kind: "waiting";
@@ -19,15 +20,46 @@ export interface Player {
   id: string;
   name: string;
   location: PlayerLocation;
+  /** ISO-8601 timestamp for when the player entered their current location. */
+  locationEnteredAt: string;
 }
 
+/** Historical v1 snapshot shape (no timestamps). */
 export interface PersistedBoardV1 {
+  version: typeof BOARD_SCHEMA_VERSION_V1;
+  players: Array<{
+    id: string;
+    name: string;
+    location: PlayerLocation;
+  }>;
+}
+
+export interface PersistedBoardV2 {
   version: typeof BOARD_SCHEMA_VERSION;
   players: Player[];
 }
 
+export type PersistedBoard = PersistedBoardV2;
+
 export interface BoardState {
   players: Player[];
+}
+
+export function nowIso(date: Date = new Date()): string {
+  return date.toISOString();
+}
+
+export function isValidLocationEnteredAt(value: unknown): value is string {
+  if (typeof value !== "string" || value.length === 0) {
+    return false;
+  }
+
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) {
+    return false;
+  }
+
+  return new Date(parsed).toISOString() === value;
 }
 
 export function createEmptyBoard(): BoardState {
@@ -35,12 +67,14 @@ export function createEmptyBoard(): BoardState {
 }
 
 /** Fresh board used on first load and reset: four waiting players. */
-export function createDefaultBoard(): BoardState {
+export function createDefaultBoard(now: Date = new Date()): BoardState {
+  const locationEnteredAt = nowIso(now);
   return {
     players: [1, 2, 3, 4].map((n) => ({
       id: `default-player-${n}`,
       name: `Player ${n}`,
       location: { kind: "waiting" as const },
+      locationEnteredAt,
     })),
   };
 }

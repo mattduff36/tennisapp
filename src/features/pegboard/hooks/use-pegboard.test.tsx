@@ -19,7 +19,7 @@ function createMockRepository(initial: LoadBoardResult): {
       current = {
         status: "ok",
         board,
-        snapshot: { version: 1, players: board.players },
+        snapshot: { version: 2, players: board.players },
       };
     },
     async reset() {
@@ -90,5 +90,43 @@ describe("usePegboard hydration", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 40));
     expect(saves).toHaveLength(0);
+  });
+
+  it("MIGRATE-01: migrated v1 boards are written back as dirty saves", async () => {
+    const { repository, saves } = createMockRepository({
+      status: "ok",
+      board: {
+        players: [
+          {
+            id: "a",
+            name: "Ada",
+            location: { kind: "waiting" },
+            locationEnteredAt: "2026-08-08T12:00:00.000Z",
+          },
+        ],
+      },
+      snapshot: {
+        version: 2,
+        players: [
+          {
+            id: "a",
+            name: "Ada",
+            location: { kind: "waiting" },
+            locationEnteredAt: "2026-08-08T12:00:00.000Z",
+          },
+        ],
+      },
+      migratedFromVersion: 1,
+    });
+
+    renderHook(() => usePegboard(() => repository));
+
+    await waitFor(() => {
+      expect(saves.length).toBeGreaterThan(0);
+    });
+    expect(
+      (saves[0] as { players: Array<{ locationEnteredAt: string }> }).players[0]
+        ?.locationEnteredAt,
+    ).toBe("2026-08-08T12:00:00.000Z");
   });
 });

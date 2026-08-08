@@ -2,6 +2,7 @@ import {
   createDefaultBoard,
   createPlayerId,
   normalizePlayerName,
+  nowIso,
   type BoardState,
   type CourtId,
   type Player,
@@ -54,6 +55,7 @@ function updatePlayer(
 export function reduceBoard(
   state: BoardState,
   action: BoardAction,
+  now: Date = new Date(),
 ): BoardTransitionResult {
   switch (action.type) {
     case "ADD_PLAYER": {
@@ -66,6 +68,7 @@ export function reduceBoard(
         id: createPlayerId(),
         name,
         location: { kind: "waiting" },
+        locationEnteredAt: nowIso(now),
       };
 
       return changed(
@@ -134,10 +137,13 @@ export function reduceBoard(
         );
       }
 
+      const locationEnteredAt = nowIso(now);
+
       return changed(
         updatePlayer(state, action.playerId, (current) => ({
           ...current,
           location: { kind: "court", courtId: action.courtId },
+          locationEnteredAt,
         })),
         `${player.name} moved to Court ${action.courtId}.`,
       );
@@ -153,10 +159,13 @@ export function reduceBoard(
         return unchanged(state, `${player.name} is already waiting.`);
       }
 
+      const locationEnteredAt = nowIso(now);
+
       return changed(
         updatePlayer(state, action.playerId, (current) => ({
           ...current,
           location: { kind: "waiting" },
+          locationEnteredAt,
         })),
         `${player.name} returned to Waiting.`,
       );
@@ -170,7 +179,7 @@ export function reduceBoard(
     }
 
     case "RESET_BOARD":
-      return changed(createDefaultBoard(), "Board reset to default players.");
+      return changed(createDefaultBoard(now), "Board reset to default players.");
 
     default:
       return unchanged(state);

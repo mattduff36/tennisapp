@@ -2,7 +2,6 @@
   --grass-deep: #145a2e;
   --grass: #1f7a3d;
   --grass-light: #2f9a52;
-  --grass-stripe: rgba(255, 255, 255, 0.04);
   --line: #f7f7f2;
   --ink: #102418;
   --ink-soft: rgba(16, 36, 24, 0.78);
@@ -30,6 +29,8 @@
   --font-ui: var(--font-ui-loaded), "Segoe UI", sans-serif;
   --motion-fast: 180ms;
   --motion-med: 320ms;
+  --bg-image: url("/tennisapp-bg.png");
+  --bg-overlay: rgba(6, 22, 12, 0.58);
   color-scheme: dark;
 }
 
@@ -48,14 +49,13 @@ body {
 body {
   font-family: var(--font-ui);
   color: var(--line);
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.28)),
-    repeating-linear-gradient(
-      90deg,
-      var(--grass) 0 28px,
-      var(--grass-light) 28px 56px
-    ),
-    var(--grass-deep);
+  background-color: var(--grass-deep);
+  background-image:
+    linear-gradient(180deg, var(--bg-overlay), rgba(4, 16, 10, 0.72)),
+    var(--bg-image);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
   background-attachment: fixed;
 }
 
@@ -109,10 +109,10 @@ a {
   height: 100dvh;
   height: 100vh;
   margin: 0;
-  padding: var(--space-2);
+  padding: var(--space-4);
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
-  gap: var(--space-2);
+  gap: var(--space-4);
   overflow: hidden;
 }
 
@@ -249,24 +249,11 @@ a {
   overflow: hidden;
 }
 
-.stage-backdrop {
-  position: absolute;
-  inset: 0;
-  opacity: 0.18;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.stage-lines {
-  width: 100%;
-  height: 100%;
-}
-
 .board-grid {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-4);
   height: 100%;
   min-height: 0;
 }
@@ -274,15 +261,15 @@ a {
 .courts-column {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--space-2);
+  gap: var(--space-4);
   min-height: 0;
   height: 100%;
 }
 
 .zone {
-  padding: var(--space-2);
+  padding: var(--space-4);
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-4);
   align-content: start;
   background: var(--panel-strong);
   min-height: 0;
@@ -324,7 +311,7 @@ a {
 
 .courts-grid {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-4);
   min-height: 0;
   height: 100%;
 }
@@ -379,14 +366,14 @@ a {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
   min-height: 0;
 }
 
 .player-tile {
   display: grid;
   gap: var(--space-1);
-  padding: var(--space-2);
+  padding: var(--space-3);
   border: 2px solid rgba(247, 247, 242, 0.55);
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.05);
@@ -497,7 +484,80 @@ a {
   }
 }
 
+.stats-ticker {
+  display: none;
+  min-height: 0;
+  overflow: hidden;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel-strong);
+  box-shadow: var(--shadow);
+}
+
+.stats-ticker-viewport {
+  overflow: hidden;
+  width: 100%;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 2.5rem,
+    #000 calc(100% - 2.5rem),
+    transparent 100%
+  );
+}
+
+.stats-ticker-rail {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 48s linear infinite;
+}
+
+.stats-ticker-track {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.65rem var(--space-3);
+  white-space: nowrap;
+}
+
+.stats-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.stats-ticker-text {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.stats-ticker-ball {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: 0 0 auto;
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @media (min-width: 900px) {
+  .pegboard-shell {
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+
+  .stats-ticker {
+    display: block;
+  }
+
   .app-header {
     grid-template-columns: 1fr 1.1fr;
     align-items: end;
@@ -522,6 +582,10 @@ a {
     overflow: auto;
   }
 
+  .stats-ticker {
+    display: none;
+  }
+
   .board-grid {
     grid-template-rows: minmax(180px, 0.4fr) minmax(0, 1fr);
   }
@@ -533,6 +597,10 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .stats-ticker-rail {
+    animation: none;
+  }
+
   .player-tile.is-selected,
   .court-bounce,
   .waiting-bounce {

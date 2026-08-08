@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { CourtCard } from "./components/court-card";
 import { DragGhost } from "./components/drag-ghost";
 import { PlayerManager } from "./components/player-manager";
+import { StatsTicker } from "./components/stats-ticker";
 import { StatusBar } from "./components/status-bar";
 import { WaitingList } from "./components/waiting-list";
 import { usePlayerDrag } from "./drag/use-player-drag";
-import { CourtMarkings } from "./graphics/court-markings";
 import { TennisBall } from "./graphics/tennis-ball";
 import { usePegboard } from "./hooks/use-pegboard";
 
@@ -159,10 +159,6 @@ export function PegboardApp() {
       />
 
       <div className="board-stage">
-        <div className="stage-backdrop" aria-hidden="true">
-          <CourtMarkings className="stage-lines" />
-        </div>
-
         <div className="board-grid">
           <div className={waitingPulse ? "waiting-bounce" : undefined}>
             <WaitingList
@@ -212,6 +208,8 @@ export function PegboardApp() {
           </div>
         </div>
       </div>
+
+      <StatsTicker board={pegboard.board} />
 
       {drag.session ? <DragGhost session={drag.session} /> : null}
     </div>

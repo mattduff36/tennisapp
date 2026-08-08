@@ -112,6 +112,10 @@ export function usePegboard(
           savesAllowedRef.current = true;
           saveQueueRef.current?.unblock();
           setHydrated(true);
+          // Persist migrated v1 → v2 so timestamps survive the next reload.
+          if (result.migratedFromVersion === 1) {
+            setDirty(true);
+          }
           return;
         }
 
