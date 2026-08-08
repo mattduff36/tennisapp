@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tennis Court Board
 
-## Getting Started
+Touch-friendly tennis pegboard for a Surface tablet. Manage a Waiting list and three On Court groups (2–4 players preferred; one player marked incomplete). State is saved in browser `localStorage` only.
 
-First, run the development server:
+## Stack
+
+- Next.js App Router + TypeScript
+- Native CSS (grass-court visual system)
+- Vitest + Testing Library
+- Playwright
+
+## Scripts
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run start
+npm run test:e2e
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Local development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open the local URL in Edge/Chromium. Prefer a tablet-sized viewport for layout checks.
 
-## Learn More
+## How to use
 
-To learn more about Next.js, take a look at the following resources:
+1. Add players by name.
+2. Tap a Waiting player to select them.
+3. Tap **Place here** on a court (max 4).
+4. Tap an on-court player to return them to Waiting.
+5. Rename/delete from Waiting actions (delete asks for confirmation).
+6. **Reset board** clears only this app’s local storage key after confirmation.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Persistence and origin isolation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Storage key: `tennisapp.pegboard.v1`
+- Schema is versioned. Corrupt or newer data is not overwritten automatically; use **Reset local board**.
+- Browser storage is origin-specific. Preview deployments, alternate domains, and production do **not** share state.
+- Clearing site data or changing browser profiles removes the board.
 
-## Deploy on Vercel
+### Canonical Surface URL
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+After production deploy, bookmark **one** canonical Vercel production URL for the tablet (documented here once live). Do not use preview URLs for the live board.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Future sync boundary
+
+UI and domain logic talk to an async `BoardRepository` (`load` / `save` / `reset`). A remote repository can replace the localStorage implementation later; authentication and conflict semantics are intentionally out of scope for v1.
+
+## Deploy
+
+Connected to GitHub [`mattduff36/tennisapp`](https://github.com/mattduff36/tennisapp) and Vercel. Production deploys from `main`.
