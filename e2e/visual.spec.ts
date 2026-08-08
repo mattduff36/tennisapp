@@ -7,6 +7,7 @@ test("VISUAL-01: portrait and landscape grass-court board remain usable", async 
   await page.goto("/");
   await page.evaluate(() => window.localStorage.clear());
   await page.reload();
+  await expect(page.getByLabel("Add player")).toBeEnabled();
 
   await page.getByLabel("Add player").fill("Ada");
   await page.getByRole("button", { name: "Add" }).click();
