@@ -48,7 +48,11 @@ Open the local URL in Edge/Chromium. Prefer a tablet-sized viewport for layout c
 
 ### Canonical Surface URL
 
-After production deploy, bookmark **one** canonical Vercel production URL for the tablet (documented here once live). Do not use preview URLs for the live board.
+Bookmark this production URL on the Surface tablet:
+
+**https://tennisapp-delta.vercel.app**
+
+Do not use preview URLs (`*-git-*` or deployment-hash URLs) for the live board. Preview and production origins do not share `localStorage`.
 
 ## Future sync boundary
 
@@ -56,4 +60,7 @@ UI and domain logic talk to an async `BoardRepository` (`load` / `save` / `reset
 
 ## Deploy
 
-Connected to GitHub [`mattduff36/tennisapp`](https://github.com/mattduff36/tennisapp) and Vercel. Production deploys from `main`.
+Connected to GitHub [`mattduff36/tennisapp`](https://github.com/mattduff36/tennisapp) and Vercel project `tennisapp` (team `mpdees-projects`). Production deploys from `main`.
+
+- Production: https://tennisapp-delta.vercel.app
+- Also aliased as: https://tennisapp-mpdees-projects.vercel.app
