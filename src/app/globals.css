@@ -40,7 +40,9 @@
 html,
 body {
   margin: 0;
-  min-height: 100%;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -103,11 +105,15 @@ a {
 }
 
 .pegboard-shell {
-  width: min(1400px, calc(100% - 1.5rem));
-  margin: 0 auto;
-  padding: var(--space-3) 0 var(--space-5);
+  width: 100%;
+  height: 100dvh;
+  height: 100vh;
+  margin: 0;
+  padding: var(--space-2);
   display: grid;
-  gap: var(--space-3);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: var(--space-2);
+  overflow: hidden;
 }
 
 .app-header,
@@ -123,8 +129,8 @@ a {
 
 .app-header {
   display: grid;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
 }
 
 .brand {
@@ -143,7 +149,7 @@ a {
 }
 
 .brand h1 {
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-size: clamp(1.25rem, 2.4vw, 1.9rem);
   line-height: 1;
 }
 
@@ -196,8 +202,8 @@ a {
 
 .status-bar {
   display: grid;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   align-items: center;
 }
 
@@ -238,6 +244,9 @@ a {
 .board-stage {
   position: relative;
   isolation: isolate;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .stage-backdrop {
@@ -257,14 +266,26 @@ a {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  height: 100%;
+  min-height: 0;
+}
+
+.courts-column {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-2);
+  min-height: 0;
+  height: 100%;
 }
 
 .zone {
-  padding: var(--space-3);
+  padding: var(--space-2);
   display: grid;
   gap: var(--space-2);
+  align-content: start;
   background: var(--panel-strong);
+  min-height: 0;
 }
 
 .zone-header {
@@ -280,13 +301,20 @@ a {
   font-size: 1.2rem;
 }
 
+.board-grid > div:first-child,
+.waiting-bounce {
+  min-height: 0;
+  height: 100%;
+}
+
 .waiting-zone {
-  min-height: 280px;
+  height: 100%;
+  overflow: auto;
 }
 
 .on-court-heading {
-  padding: var(--space-3);
-  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: 0;
 }
 
 .on-court-heading p {
@@ -296,34 +324,20 @@ a {
 
 .courts-grid {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  min-height: 0;
+  height: 100%;
+}
+
+.courts-grid > * {
+  min-height: 0;
+  height: 100%;
 }
 
 .court-zone {
   position: relative;
-  overflow: hidden;
-}
-
-.court-artwork {
-  position: absolute;
-  inset: 0;
-  opacity: 0.2;
-  pointer-events: none;
-}
-
-.court-lines,
-.court-net {
-  width: 100%;
+  overflow: auto;
   height: 100%;
-}
-
-.court-net {
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  top: 46%;
-  height: 18px;
-  width: 84%;
 }
 
 .court-zone.can-receive {
@@ -366,6 +380,7 @@ a {
   padding: 0;
   display: grid;
   gap: var(--space-2);
+  min-height: 0;
 }
 
 .player-tile {
@@ -459,8 +474,8 @@ a {
   }
 
   .board-grid {
-    grid-template-columns: minmax(280px, 0.9fr) 1.4fr;
-    align-items: start;
+    grid-template-columns: minmax(240px, 0.85fr) 1.45fr;
+    align-items: stretch;
   }
 
   .courts-grid {
@@ -469,8 +484,17 @@ a {
 }
 
 @media (max-width: 899px) {
+  .pegboard-shell {
+    overflow: auto;
+  }
+
+  .board-grid {
+    grid-template-rows: minmax(180px, 0.4fr) minmax(0, 1fr);
+  }
+
   .courts-grid {
     grid-template-columns: 1fr;
+    grid-auto-rows: minmax(160px, 1fr);
   }
 }
 

@@ -6,6 +6,8 @@ async function openFreshBoard(page: Page) {
   await page.reload();
   await expect(page.getByRole("heading", { name: "Tennis Court Board" })).toBeVisible();
   await expect(page.getByLabel("Add player")).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Select Player 1 from Waiting" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Select Player 4 from Waiting" })).toBeVisible();
 }
 
 test("ASSIGN / RETURN / incomplete / capacity flows", async ({ page }) => {

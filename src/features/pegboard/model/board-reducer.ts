@@ -1,5 +1,5 @@
 import {
-  createEmptyBoard,
+  createDefaultBoard,
   createPlayerId,
   normalizePlayerName,
   type BoardState,
@@ -167,7 +167,7 @@ export function reduceBoard(
     }
 
     case "RESET_BOARD":
-      return changed(createEmptyBoard(), "Local board cleared.");
+      return changed(createDefaultBoard(), "Board reset to default players.");
 
     default:
       return unchanged(state);

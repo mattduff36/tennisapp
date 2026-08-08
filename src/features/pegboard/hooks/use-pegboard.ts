@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  createDefaultBoard,
   createEmptyBoard,
   type BoardState,
   type CourtId,
@@ -93,12 +94,13 @@ export function usePegboard(
         }
 
         if (result.status === "empty") {
-          setBoard(createEmptyBoard());
+          setBoard(createDefaultBoard());
           setPersistenceStatus("ready");
           setStorageMessage(null);
           savesAllowedRef.current = true;
           saveQueueRef.current?.unblock();
           setHydrated(true);
+          setDirty(true);
           return;
         }
 
@@ -261,12 +263,12 @@ export function usePegboard(
     savesAllowedRef.current = false;
     await queue?.idle();
     await repositoryRef.current!.reset();
-    setBoard(createEmptyBoard());
+    setBoard(createDefaultBoard());
     setSelectedPlayerId(null);
-    setNotice("Local board cleared.");
+    setNotice("Board reset to default players.");
     setStorageMessage(null);
     setPersistenceStatus("ready");
-    setDirty(false);
+    setDirty(true);
     savesAllowedRef.current = true;
     queue?.unblock();
   }, []);

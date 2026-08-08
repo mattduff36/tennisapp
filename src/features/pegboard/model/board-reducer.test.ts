@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createDefaultBoard,
   createEmptyBoard,
   type BoardState,
   type Player,
@@ -17,12 +18,17 @@ function withPlayers(players: Player[]): BoardState {
 }
 
 describe("board reducer", () => {
-  it("STATE-01: new state exposes exactly three empty courts", () => {
-    const state = createEmptyBoard();
+  it("STATE-01: default board exposes three empty courts and four waiting players", () => {
+    const state = createDefaultBoard();
     expect(getCourtPlayers(state, 1)).toHaveLength(0);
     expect(getCourtPlayers(state, 2)).toHaveLength(0);
     expect(getCourtPlayers(state, 3)).toHaveLength(0);
-    expect(getWaitingPlayers(state)).toHaveLength(0);
+    expect(getWaitingPlayers(state).map((player) => player.name)).toEqual([
+      "Player 1",
+      "Player 2",
+      "Player 3",
+      "Player 4",
+    ]);
   });
 
   it("STATE-02 / ASSIGN-01: selected waiting player moves to court and stays uniquely located", () => {

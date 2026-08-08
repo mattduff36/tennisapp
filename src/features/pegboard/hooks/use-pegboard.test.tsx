@@ -58,18 +58,18 @@ describe("usePegboard hydration", () => {
     });
 
     await waitFor(() => {
-      expect(result.current.persistenceStatus).toBe("ready");
+      expect(result.current.canInteract).toBe(true);
     });
 
-    expect(saves).toHaveLength(0);
-
-    act(() => {
-      result.current.addPlayer("Ada");
-    });
-
+    // Empty storage seeds the default four players and persists after hydrate.
     await waitFor(() => {
       expect(saves.length).toBeGreaterThan(0);
     });
+    expect(
+      (saves[0] as { players: Array<{ name: string }> }).players.map(
+        (player) => player.name,
+      ),
+    ).toEqual(["Player 1", "Player 2", "Player 3", "Player 4"]);
   });
 
   it("keeps save blocked for unsupported newer storage", async () => {

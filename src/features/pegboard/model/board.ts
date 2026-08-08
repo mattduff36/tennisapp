@@ -34,6 +34,17 @@ export function createEmptyBoard(): BoardState {
   return { players: [] };
 }
 
+/** Fresh board used on first load and reset: four waiting players. */
+export function createDefaultBoard(): BoardState {
+  return {
+    players: [1, 2, 3, 4].map((n) => ({
+      id: `default-player-${n}`,
+      name: `Player ${n}`,
+      location: { kind: "waiting" as const },
+    })),
+  };
+}
+
 export function createPlayerId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();

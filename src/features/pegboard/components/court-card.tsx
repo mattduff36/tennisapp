@@ -1,7 +1,5 @@
 "use client";
 
-import { CourtMarkings } from "../graphics/court-markings";
-import { NetStrip } from "../graphics/net-strip";
 import type { CourtId, Player } from "../model/board";
 import { PlayerTile } from "./player-tile";
 
@@ -34,11 +32,6 @@ export function CourtCard({
       <div className="zone-header">
         <h2 id={`court-${courtId}-heading`}>Court {courtId}</h2>
         <p className="zone-count">{players.length}/4</p>
-      </div>
-
-      <div className="court-artwork" aria-hidden="true">
-        <CourtMarkings className="court-lines" />
-        <NetStrip className="court-net" />
       </div>
 
       {isIncomplete ? (
