@@ -8,31 +8,44 @@ web
 
 ## Stack
 
-Next.js App Router + TypeScript + native CSS, deployed on Vercel from GitHub (`mattduff36/tennisapp`).
+Next.js App Router + TypeScript + native CSS, deployed on Vercel from GitHub (`mattduff36/tennisapp`). Shared player-pool state lives in Neon Postgres.
 
 ## Users
 
-Club helpers and coaches on a Microsoft Surface tablet beside the courts. They need to move players between Waiting and three active courts with large, reliable tap targets during live sessions.
+Two surfaces:
+
+- Club helpers on a Microsoft Surface tablet using the local pegboard at `/`.
+- Players on their phones using the installable PWA at `/play`.
 
 ## Product Purpose
 
-A touch-friendly tennis pegboard that keeps a live Waiting list and three On Court groups visible at a glance. Success means the board stays correct after refresh and is fast enough to use mid-session without accounts or a backend.
+A grass-court tennis club tool with a tablet display board and a very simple phone app. Players join a shared waiting pool by name. When enough people are waiting, anyone can tap **Players ready**; the app fills one free court (the requester plus random waiters) and shows each selected player their court and partners.
 
 ## Positioning
 
-The board itself is a working grass tennis court: white court geometry organizes Waiting and the three courts, and tennis-ball cues communicate selection and movement. That is the mechanism and the identity.
+The tablet board is still a working grass tennis court. The phone app uses the same grass, lines, and tennis-ball actions, with huge buttons and two destinations only: Play and Settings.
 
 ## Operating Context
 
-Used outdoors or indoors on a local Surface in Edge/Chromium. One tablet, one browser profile. State is local to that origin. Future sync is out of scope for version one.
+- Tablet pegboard: one browser profile, `localStorage` only, unchanged from the original board.
+- Phone PWA: shared Neon session, identity remembered in `localStorage` (`tennisapp.me.v1`). No accounts. Duplicate names are rejected. The lobby polls every 3 seconds.
 
 ## Capabilities and Constraints
 
+Tablet (`/`):
+
 - Create, rename, and delete players (delete confirmed).
 - Waiting list and exactly three courts (capacity 0–4; one occupant marked incomplete).
-- Tap waiting player, then tap a court to assign; tap on-court player to return to Waiting.
 - Persist board state in versioned localStorage only.
-- No accounts, backend, PWA, multi-tab sync, or remote conflict handling.
+
+Phone (`/play`, `/settings`):
+
+- Ask “What is your name?” and join the pool.
+- Remember this phone’s player; a taken name must be changed.
+- Show the waiting list; **Players ready** fills one free court.
+- Assignment screen: court name, partners, **I'm done** (whole court returns to waiting).
+- Settings: court count, singles/doubles, court names, rename/remove players, clear court, reset session.
+- No push notifications, no settings PIN, no wiring of the tablet board to Neon yet.
 
 ## Brand Commitments
 
@@ -40,16 +53,16 @@ Grass-court green ground, structural white tennis lines, authored tennis-ball/co
 
 ## Evidence on Hand
 
-No club logos or photography yet. Graphics are authored inline SVG/CSS for version one.
+No club logos or photography yet. Graphics are authored inline SVG/CSS.
 
 ## Product Principles
 
 1. Task clarity beats decoration: every control must remain scannable at arm’s length.
-2. The court layout is the UI, not wallpaper behind cards.
+2. The court layout is the UI on the tablet; the phone app is three obvious screens.
 3. Invalid moves leave state unchanged and give clear feedback.
-4. Persistence must be safe: never overwrite storage before hydration or when data is corrupt/newer.
+4. Persistence must be safe: never overwrite tablet storage before hydration or when data is corrupt/newer. Shared session writes use a locked transaction.
 5. Motion communicates placement; it never blocks the next tap.
 
 ## Accessibility & Inclusion
 
-Large touch targets (≥48px), visible focus, keyboard activation for all actions, and `prefers-reduced-motion` disables nonessential movement. Strong contrast between white lines, player labels, and grass.
+Large touch targets (tablet ≥48px, phone primary actions ~64–88px), visible focus, keyboard activation for all actions, and `prefers-reduced-motion` disables nonessential movement. Strong contrast between white lines, player labels, and grass.

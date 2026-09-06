@@ -5,6 +5,20 @@ import {
   type TextSize,
 } from "./text-size";
 
+const TEXT_SIZE_EVENT = "tennisapp-text-size";
+
+export function subscribeTextSize(onStoreChange: () => void): () => void {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener(TEXT_SIZE_EVENT, onStoreChange);
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener(TEXT_SIZE_EVENT, onStoreChange);
+  };
+}
+
 export function loadTextSize(): TextSize {
   if (typeof window === "undefined") {
     return DEFAULT_TEXT_SIZE;
@@ -29,6 +43,7 @@ export function saveTextSize(size: TextSize): void {
 
   try {
     window.localStorage.setItem(TEXT_SIZE_STORAGE_KEY, size);
+    window.dispatchEvent(new Event(TEXT_SIZE_EVENT));
   } catch {
     // Preference is best-effort; board persistence is separate.
   }

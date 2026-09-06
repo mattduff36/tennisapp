@@ -146,7 +146,12 @@ export function PegboardApp() {
               <h1>Tennis Court Board</h1>
             </div>
           </div>
-          <TextSizeControl textSize={textSize} onChange={setTextSize} />
+          <div className="header-tools">
+            <a className="chip-button" href="/play">
+              Player app
+            </a>
+            <TextSizeControl textSize={textSize} onChange={setTextSize} />
+          </div>
         </div>
         <PlayerManager
           disabled={!pegboard.canInteract}

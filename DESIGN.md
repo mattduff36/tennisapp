@@ -4,7 +4,7 @@
 
 ## World
 
-Working grass tennis court. The pegboard *is* the court: saturated green playing surface, structural white lines, tennis-ball markers, scoreboard labels. Operate mode — task clarity first, brand in the materials.
+Working grass tennis court. The pegboard *is* the court: saturated green playing surface, structural white lines, tennis-ball markers, scoreboard labels. The phone pool uses the same materials with a scrolling play shell and two huge nav tabs.
 
 ## Palette
 
@@ -14,7 +14,7 @@ Working grass tennis court. The pegboard *is* the court: saturated green playing
 | `--line` | Court lines and primary text |
 | `--ball` | Selection / primary action |
 | `--accent` | Scoreboard labels |
-| `--warning` | Incomplete court |
+| `--warning` | Incomplete court / session notices |
 | `--danger` | Destructive actions |
 | `--panel` / `--panel-strong` | Translucent court plates |
 
@@ -25,10 +25,18 @@ Working grass tennis court. The pegboard *is* the court: saturated green playing
 
 ## Components
 
-- Waiting zone and three court zones as lined court plates
+- Waiting zone and three court zones as lined court plates (tablet)
 - Player tiles with inline tennis-ball SVG
 - Court markings + net strip as authored SVG
-- Large pill buttons (≥48px), visible focus ring `--focus`
+- Large pill buttons (≥48px tablet; `.play-primary` ~88px on phone)
+- Play / Settings footer tabs
+- Visible focus ring `--focus`
+
+## Phone play shell
+
+- `.play-shell` is the viewport scrollport (`100dvh`) with safe-area padding
+- `html` / `body` stay `overflow: hidden` for the tablet board
+- Name, waiting, and assignment screens stack one primary action at a time
 
 ## Motion
 

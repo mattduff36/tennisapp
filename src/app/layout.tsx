@@ -17,13 +17,24 @@ const ui = IBM_Plex_Sans({
 export const metadata: Metadata = {
   title: "Tennis Court Board",
   description:
-    "Touch-friendly tennis pegboard for waiting players and three on-court groups.",
+    "Touch-friendly tennis pegboard and a shared phone pool for waiting players.",
+  applicationName: "Tennis Players",
+  appleWebApp: {
+    capable: true,
+    title: "Tennis Players",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#1f7a3d",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
