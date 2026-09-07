@@ -153,3 +153,23 @@ test("PLAY-UI-01 Play/Settings in top nav; Players ready/Leave in bottom dock", 
   await expect(dock.getByRole("button", { name: "Need 2 more" })).toBeVisible();
   await expect(dock.getByRole("button", { name: "Leave" })).toBeVisible();
 });
+
+test("PLAY-UI-02 in-app nav stays inside Board / Play / Settings", async ({
+  page,
+}) => {
+  const repository = createMemorySessionRepository();
+  await mockSessionApi(page, repository);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/play");
+  const nav = page.getByRole("navigation", { name: "Club app" });
+  await nav.getByRole("link", { name: "Board" }).click();
+  await expect(page).toHaveURL("/");
+  await expect(page.getByRole("heading", { name: "Tennis Court Board" })).toBeVisible();
+  await page.getByRole("navigation", { name: "Club app" }).getByRole("link", { name: "Settings" }).click();
+  await expect(page).toHaveURL("/settings");
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await page.getByRole("navigation", { name: "Club app" }).getByRole("link", { name: "Play" }).click();
+  await expect(page).toHaveURL("/play");
+  await expect(page.getByRole("heading", { name: "What is your name?" })).toBeVisible();
+});
