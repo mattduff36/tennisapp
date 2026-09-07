@@ -42,7 +42,7 @@ export function SessionCourtCard({
           </ul>
           <button
             type="button"
-            className="chip-button"
+            className={density === "compact" ? "chip-button" : "play-secondary"}
             disabled={disabled}
             onClick={() => onClear(court.id)}
           >

@@ -50,7 +50,8 @@ export function SettingsApp() {
           {!view || session.loading ? (
             <p className="play-lede">Loading…</p>
           ) : (
-            <>
+            <div className="settings-desktop-grid">
+              <div className="settings-col">
               <h2 className="play-section-title">Display</h2>
               <p className="play-lede">
                 Text size is saved on this device only.
@@ -160,7 +161,12 @@ export function SettingsApp() {
                     Phone Ready still includes you. Partners and the board group
                     follow this rule.
                   </p>
-
+                </>
+              )}
+              </div>
+              {!locked ? (
+                <>
+                  <div className="settings-col">
                   <h2 className="play-section-title">Courts</h2>
                   <div className="play-count-row">
                     <button
@@ -249,6 +255,8 @@ export function SettingsApp() {
                     </div>
                   ))}
 
+                  </div>
+                  <div className="settings-col">
                   <h2 className="play-section-title">Players</h2>
                   {view.waiting.length === 0 &&
                   view.courts.every((court) => court.players.length === 0) ? (
@@ -415,9 +423,10 @@ export function SettingsApp() {
                       </button>
                     </>
                   )}
+                  </div>
                 </>
-              )}
-            </>
+              ) : null}
+            </div>
           )}
         </section>
       </main>

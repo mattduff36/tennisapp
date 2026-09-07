@@ -33,7 +33,7 @@ export function PlayerManager({
           maxLength={40}
           disabled={disabled}
         />
-        <button type="submit" className="primary-button" disabled={disabled}>
+        <button type="submit" className="play-primary" disabled={disabled}>
           Add
         </button>
       </div>

@@ -13,6 +13,7 @@ import {
   readyButtonLabel,
   readyConfirmCopy,
 } from "../model/session-copy";
+import { PlayNav } from "./play-nav";
 import { SessionCourtCard } from "./session-court-card";
 import { SessionTicker } from "./session-ticker";
 import { SessionWaitingList } from "./session-waiting-list";
@@ -92,128 +93,128 @@ export function BoardApp() {
 
   return (
     <div className="pegboard-shell">
-      <header className="app-header">
-        <div className="header-brand-block">
-          <div className="brand">
-            <TennisBall className="brand-ball" />
+      <PlayNav />
+      <div className="pegboard-main">
+        <header className="app-header">
+          <div className="header-brand-block">
+            <div className="brand">
+              <TennisBall className="brand-ball" />
+              <div>
+                <p className="scoreboard-label">Club session</p>
+                <h1>Tennis Court Board</h1>
+              </div>
+            </div>
+            <div className="header-tools">
+              <TextSizeControl textSize={textSize} onChange={setTextSize} />
+            </div>
+          </div>
+          <PlayerManager disabled={!canInteract} onAdd={handleAdd} />
+        </header>
+
+        <div className="status-bar">
+          <div className="selection-panel" role="status" aria-live="polite">
+            <TennisBall className="status-ball" />
             <div>
-              <p className="scoreboard-label">Club session</p>
-              <h1>Tennis Court Board</h1>
+              <p className="scoreboard-label">Session</p>
+              <p className="selection-value">
+                {session.loading && !view
+                  ? "Loading…"
+                  : view
+                    ? `${view.waitingCount} waiting · ${view.freeCourtCount} free`
+                    : "Could not load the session"}
+              </p>
             </div>
           </div>
-          <div className="header-tools">
-            <a className="chip-button" href="/settings">
-              Settings
-            </a>
-            <a className="chip-button" href="/play">
-              Player app
-            </a>
-            <TextSizeControl textSize={textSize} onChange={setTextSize} />
+          <div className="notice-panel" role="status" aria-live="polite">
+            <p className="scoreboard-label">Board status</p>
+            <p className="selection-value">{session.notice ?? "Ready"}</p>
           </div>
-        </div>
-        <PlayerManager disabled={!canInteract} onAdd={handleAdd} />
-      </header>
-
-      <div className="status-bar">
-        <div className="selection-panel" role="status" aria-live="polite">
-          <TennisBall className="status-ball" />
-          <div>
-            <p className="scoreboard-label">Session</p>
-            <p className="selection-value">
-              {session.loading && !view
-                ? "Loading…"
-                : view
-                  ? `${view.waitingCount} waiting · ${view.freeCourtCount} free`
-                  : "Could not load the session"}
-            </p>
-          </div>
-        </div>
-        <div className="notice-panel" role="status" aria-live="polite">
-          <p className="scoreboard-label">Board status</p>
-          <p className="selection-value">{session.notice ?? "Ready"}</p>
-        </div>
-        <button
-          type="button"
-          className="chip-button danger"
-          onClick={handleReset}
-          disabled={!canInteract}
-        >
-          Reset session
-        </button>
-      </div>
-
-      <div className="board-stage">
-        <div className="board-grid">
-          <SessionWaitingList
-            players={view?.waiting ?? []}
-            disabled={!canInteract}
-            onRename={handleRename}
-            onRemove={handleRemove}
-          />
-          <div className="courts-column" aria-label="On Court">
-            <div className="on-court-heading">
-              <h2>On Court</h2>
-              <p>Players ready fills one free court from the waiting pool</p>
-            </div>
-            <div
-              className="courts-grid"
-              data-court-count={courtCount || undefined}
-              data-court-density={courtCount ? courtDensity : undefined}
-            >
-              {(view?.courts ?? []).map((court) => (
-                <SessionCourtCard
-                  key={court.id}
-                  court={court}
-                  density={courtDensity}
-                  disabled={!canInteract}
-                  onClear={(courtId) =>
-                    void run(() => session.done({ courtId }))
-                  }
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="play-dock board-dock">
-        {confirming ? (
-          <div className="play-dock-stack">
-            <p className="play-lede">
-              {readyConfirmCopy(view?.settings.readyRule ?? "longest_wait", "board")}
-            </p>
-            <div className="play-button-row">
-              <button
-                type="button"
-                className="play-primary"
-                disabled={busy}
-                onClick={() => void handleReady()}
-              >
-                Yes, players ready
-              </button>
-              <button
-                type="button"
-                className="play-secondary"
-                disabled={busy}
-                onClick={() => setConfirming(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
           <button
             type="button"
-            className="play-primary"
-            disabled={!canInteract || !view?.canStart}
-            onClick={() => setConfirming(true)}
+            className="play-danger"
+            onClick={handleReset}
+            disabled={!canInteract}
           >
-            {view ? readyButtonLabel(view) : "Players ready"}
+            Reset session
           </button>
-        )}
-      </div>
+        </div>
 
-      {view ? <SessionTicker view={view} /> : null}
+        <div className="board-stage">
+          <div className="board-grid">
+            <SessionWaitingList
+              players={view?.waiting ?? []}
+              disabled={!canInteract}
+              onRename={handleRename}
+              onRemove={handleRemove}
+            />
+            <div className="courts-column" aria-label="On Court">
+              <div className="on-court-heading">
+                <h2>On Court</h2>
+                <p>Players ready fills one free court from the waiting pool</p>
+              </div>
+              <div
+                className="courts-grid"
+                data-court-count={courtCount || undefined}
+                data-court-density={courtCount ? courtDensity : undefined}
+              >
+                {(view?.courts ?? []).map((court) => (
+                  <SessionCourtCard
+                    key={court.id}
+                    court={court}
+                    density={courtDensity}
+                    disabled={!canInteract}
+                    onClear={(courtId) =>
+                      void run(() => session.done({ courtId }))
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="play-dock board-dock">
+          {confirming ? (
+            <div className="play-dock-stack">
+              <p className="play-lede">
+                {readyConfirmCopy(
+                  view?.settings.readyRule ?? "longest_wait",
+                  "board",
+                )}
+              </p>
+              <div className="play-button-row">
+                <button
+                  type="button"
+                  className="play-primary"
+                  disabled={busy}
+                  onClick={() => void handleReady()}
+                >
+                  Yes, players ready
+                </button>
+                <button
+                  type="button"
+                  className="play-secondary"
+                  disabled={busy}
+                  onClick={() => setConfirming(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="play-primary"
+              disabled={!canInteract || !view?.canStart}
+              onClick={() => setConfirming(true)}
+            >
+              {view ? readyButtonLabel(view) : "Players ready"}
+            </button>
+          )}
+        </div>
+
+        {view ? <SessionTicker view={view} /> : null}
+      </div>
     </div>
   );
 }

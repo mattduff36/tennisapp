@@ -23,7 +23,7 @@ A grass-court tennis club tool with a tablet board and a very simple phone app. 
 
 ## Positioning
 
-The tablet board is a live view of the shared session: waiting list and named courts. The phone app uses the same grass, lines, and tennis-ball actions, with huge buttons and a quiet Board / Play / Settings nav.
+The tablet board is a live view of the shared session: waiting list and named courts. All surfaces share a quiet Board / Play / Settings nav. The phone app uses huge buttons; on a wide screen Play and Settings sit in two or three columns so cards do not stretch full width.
 
 ## Operating Context
 

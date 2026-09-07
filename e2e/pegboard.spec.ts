@@ -31,7 +31,7 @@ test("DASH-E2E-01 tablet add waiters → Players ready → court names/duration 
   await expect(page.locator(".waiting-zone").getByText("Ada", { exact: true })).toBeVisible();
 });
 
-test("DASH-E2E-02 dashboard Settings chip opens settings; Board nav returns", async ({
+test("DASH-E2E-02 dashboard Settings nav opens settings; Board nav returns", async ({
   page,
 }) => {
   const repository = createMemorySessionRepository();
@@ -39,7 +39,9 @@ test("DASH-E2E-02 dashboard Settings chip opens settings; Board nav returns", as
 
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/");
-  await page.getByRole("link", { name: "Settings" }).click();
+  const nav = page.getByRole("navigation", { name: "Club app" });
+  await expect(nav.getByRole("link", { name: "Board" })).toBeVisible();
+  await nav.getByRole("link", { name: "Settings" }).click();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await page.getByRole("navigation", { name: "Club app" }).getByRole("link", { name: "Board" }).click();
   await expect(page.getByRole("heading", { name: "Tennis Court Board" })).toBeVisible();

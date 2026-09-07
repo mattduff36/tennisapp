@@ -4,7 +4,7 @@
 
 ## World
 
-Working grass tennis court. The tablet board *is* the court: saturated green playing surface, structural white lines, tennis-ball markers, scoreboard labels. The phone pool uses the same materials with a quiet top nav, a scrolling ticker, and a pinned action dock.
+Working grass tennis court. The tablet board *is* the court: saturated green playing surface, structural white lines, tennis-ball markers, scoreboard labels. The phone pool uses the same materials with a quiet top nav, a scrolling ticker, and a pinned action dock. The same Board / Play / Settings nav sits on the tablet board.
 
 ## Palette
 
@@ -28,7 +28,7 @@ Working grass tennis court. The tablet board *is* the court: saturated green pla
 - Waiting zone and named court plates (tablet, 1–8 courts)
 - Player tiles with inline tennis-ball SVG
 - Large pill buttons (≥48px tablet; `.play-primary` ~88px on phone)
-- Quiet Board / Play / Settings top nav
+- Quiet Board / Play / Settings top nav on every surface
 - Phone action dock for Players ready / Leave / I'm done
 - Scrolling session ticker
 - Visible focus ring `--focus`
@@ -38,6 +38,7 @@ Working grass tennis court. The tablet board *is* the court: saturated green pla
 - `.play-shell` is the viewport (`100dvh`): top nav, scrolling main, ticker, dock
 - `html` / `body` stay `overflow: hidden` for the tablet board
 - Name, waiting, and assignment screens keep primary actions in the dock except Join
+- From `900px`, Play uses two columns (pool or assignment | court summary) and Settings uses two, then three from `1200px` (Display+Game | Courts | Players)
 
 ## Motion
 

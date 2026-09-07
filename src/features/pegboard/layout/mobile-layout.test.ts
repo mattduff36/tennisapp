@@ -39,10 +39,11 @@ describe("mobile pegboard layout CSS", () => {
     expect(shellBody).toMatch(/height:\s*100vh/);
     expect(shellBody).toMatch(/height:\s*100dvh/);
     expect(shellBody).toMatch(/overflow:\s*auto/);
-    expect(shellBody).toMatch(
-      /grid-template-rows:\s*auto\s+auto\s+auto\s+auto\s+auto/,
-    );
+    expect(shellBody).toMatch(/grid-template-rows:\s*auto\s+auto/);
     expect(shellBody).not.toMatch(/height:\s*auto/);
+    expect(mobile).toMatch(
+      /\.pegboard-main\s*\{[\s\S]*?grid-template-rows:\s*auto\s+auto\s+auto\s+auto\s+auto/,
+    );
     expect(mobile).toMatch(
       /\.board-stage\s*\{[\s\S]*?height:\s*auto[\s\S]*?overflow:\s*visible/,
     );

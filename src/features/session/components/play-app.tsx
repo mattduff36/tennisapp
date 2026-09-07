@@ -182,21 +182,28 @@ export function PlayApp() {
         {session.loading && !view ? (
           <p className="play-lede">Loading…</p>
         ) : !identity ? (
-          <NameScreen
-            notice={session.notice}
-            busy={busy}
-            claimable={claimable}
-            onJoin={handleJoin}
-            onClaim={handleClaim}
-          />
-        ) : me?.status === "on_court" ? (
-          <AssignmentScreen me={me} notice={session.notice} />
+          <div className="play-join-wrap">
+            <NameScreen
+              notice={session.notice}
+              busy={busy}
+              claimable={claimable}
+              onJoin={handleJoin}
+              onClaim={handleClaim}
+            />
+          </div>
+        ) : me && me.status === "on_court" && view ? (
+          <div className="play-desktop-grid">
+            <AssignmentScreen me={me} notice={session.notice} />
+            {showSummary ? <SessionSummary view={view} /> : null}
+          </div>
         ) : view ? (
-          <WaitingScreen view={view} notice={session.notice} />
+          <div className="play-desktop-grid">
+            <WaitingScreen view={view} notice={session.notice} />
+            {showSummary ? <SessionSummary view={view} /> : null}
+          </div>
         ) : (
           <p className="play-lede">{session.notice ?? "Could not load the pool."}</p>
         )}
-        {showSummary && view ? <SessionSummary view={view} /> : null}
       </main>
       {view ? <SessionTicker view={view} /> : null}
       {dock ? <PlayDock>{dock}</PlayDock> : null}
