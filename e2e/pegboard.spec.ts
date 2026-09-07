@@ -1,175 +1,70 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { createMemorySessionRepository } from "../src/features/session/storage/memory-session-repository";
+import { mockSessionApi } from "./mock-session-api";
 
-async function openFreshBoard(page: Page) {
-  await page.goto("/");
-  await page.evaluate(() => window.localStorage.clear());
-  await page.reload();
-  await expect(page.getByRole("heading", { name: "Tennis Court Board" })).toBeVisible();
-  await expect(page.getByLabel("Add player")).toBeEnabled();
-  await expect(
-    page.getByRole("button", { name: "Drag Player 1 onto a court, or tap to select" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Drag Player 4 onto a court, or tap to select" }),
-  ).toBeVisible();
-}
-
-test("ASSIGN / RETURN / incomplete / capacity flows", async ({ page }) => {
-  await openFreshBoard(page);
-
-  await page.getByLabel("Add player").fill("Ada");
-  await page.getByRole("button", { name: "Add" }).click();
-  await page.getByLabel("Add player").fill("Bea");
-  await page.getByRole("button", { name: "Add" }).click();
-
-  await page
-    .getByRole("button", { name: "Drag Ada onto a court, or tap to select" })
-    .click();
-  await page.getByRole("button", { name: "Place selected player on Court 1" }).click();
-
-  await expect(page.getByText("Needs player")).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Drag Ada back to Waiting, or tap to return" }),
-  ).toBeVisible();
-
-  await page
-    .getByRole("button", { name: "Drag Bea onto a court, or tap to select" })
-    .click();
-  await page.getByRole("button", { name: "Place selected player on Court 1" }).click();
-  await expect(page.getByText("Needs player")).toHaveCount(0);
-
-  for (const name of ["Cara", "Dee"]) {
-    await page.getByLabel("Add player").fill(name);
-    await page.getByRole("button", { name: "Add" }).click();
-    await page
-      .getByRole("button", { name: `Drag ${name} onto a court, or tap to select` })
-      .click();
-    await page.getByRole("button", { name: "Place selected player on Court 1" }).click();
-  }
-
-  await page.getByLabel("Add player").fill("Eve");
-  await page.getByRole("button", { name: "Add" }).click();
-  await page
-    .getByRole("button", { name: "Drag Eve onto a court, or tap to select" })
-    .click();
-  await page.getByRole("button", { name: "Court 1 is full" }).click();
-  await expect(page.getByText(/Court 1 is full \(4 players\)/i)).toBeVisible();
-  await expect(
-    page.getByRole("button", {
-      name: "Eve, selected. Drag onto a court, or tap a court to place.",
-    }),
-  ).toBeVisible();
-
-  await page
-    .getByRole("button", { name: "Drag Ada back to Waiting, or tap to return" })
-    .click();
-  await expect(
-    page.getByRole("button", { name: "Drag Ada onto a court, or tap to select" }),
-  ).toBeVisible();
-});
-
-test("drag waiting player onto a court without selecting first", async ({ page }) => {
-  await openFreshBoard(page);
-
-  const player = page.getByRole("button", {
-    name: "Drag Player 1 onto a court, or tap to select",
-  });
-  const court = page.locator('[data-pegboard-drop="2"]');
-
-  await player.dragTo(court);
-  await expect(
-    page.getByRole("button", { name: "Drag Player 1 back to Waiting, or tap to return" }),
-  ).toBeVisible();
-  await expect(page.getByText(/Player 1 moved to Court 2/i)).toBeVisible();
-});
-
-test("A11Y-01 / MOTION-01: labelled controls, return bounce, and reduced motion", async ({
+test("DASH-E2E-01 tablet add waiters → Players ready → court names/duration → clear court", async ({
   page,
 }) => {
-  await openFreshBoard(page);
+  const repository = createMemorySessionRepository();
+  await mockSessionApi(page, repository);
 
-  const add = page.getByRole("button", { name: "Add" });
-  const box = await add.boundingBox();
-  expect(box).not.toBeNull();
-  expect(box!.height).toBeGreaterThanOrEqual(48);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/");
 
-  await page.getByLabel("Add player").fill("Focus Player");
-  await page.getByRole("button", { name: "Add" }).click();
-  await page
-    .getByRole("button", { name: "Drag Focus Player onto a court, or tap to select" })
-    .click();
-  await page.getByRole("button", { name: "Place selected player on Court 1" }).click();
-  await expect(page.locator(".court-bounce")).toHaveCount(1);
+  for (const name of ["Ada", "Bea", "Cara", "Dee"]) {
+    await page.getByLabel("Add player").fill(name);
+    await page.getByRole("button", { name: "Add" }).click();
+    await expect(page.getByText(name, { exact: true })).toBeVisible();
+  }
 
-  await page
-    .getByRole("button", { name: "Drag Focus Player back to Waiting, or tap to return" })
-    .click();
-  await expect(page.locator(".waiting-bounce")).toHaveCount(1);
+  await page.getByRole("button", { name: "Players ready" }).click();
+  await page.getByRole("button", { name: "Yes, players ready" }).click();
 
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page
-    .getByRole("button", { name: "Drag Focus Player onto a court, or tap to select" })
-    .click();
-  await page.getByRole("button", { name: "Place selected player on Court 1" }).click();
-  await expect(page.locator(".court-bounce")).toHaveCount(0);
-  await page
-    .getByRole("button", { name: "Drag Focus Player back to Waiting, or tap to return" })
-    .click();
-  await expect(page.locator(".waiting-bounce")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Court 1" })).toBeVisible();
+  const courtOne = page.locator(".court-zone").first();
+  await expect(courtOne.getByText("Ada")).toBeVisible();
+  await expect(courtOne.getByText("Bea")).toBeVisible();
+  await expect(courtOne.locator(".zone-count")).not.toHaveText("Free");
+
+  await page.getByRole("button", { name: "Clear court" }).click();
+  await expect(page.getByText("Court 1 is free again.")).toBeVisible();
+  await expect(page.locator(".waiting-zone").getByText("Ada", { exact: true })).toBeVisible();
 });
 
-test("PERSIST refresh keeps board state", async ({ page }) => {
-  await openFreshBoard(page);
+test("DASH-E2E-02 dashboard Settings chip opens settings; Board nav returns", async ({
+  page,
+}) => {
+  const repository = createMemorySessionRepository();
+  await mockSessionApi(page, repository);
 
-  await page.getByLabel("Add player").fill("Persisted");
-  await page.getByRole("button", { name: "Add" }).click();
-  await page
-    .getByRole("button", { name: "Drag Persisted onto a court, or tap to select" })
-    .click();
-  await page.getByRole("button", { name: "Place selected player on Court 2" }).click();
-
-  await expect(page.getByText("Saved on this device")).toBeVisible();
-
-  await page.reload();
-  await expect(
-    page.getByRole("button", { name: "Drag Persisted back to Waiting, or tap to return" }),
-  ).toBeVisible();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/");
+  await page.getByRole("link", { name: "Settings" }).click();
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await page.getByRole("navigation", { name: "Club app" }).getByRole("link", { name: "Board" }).click();
+  await expect(page.getByRole("heading", { name: "Tennis Court Board" })).toBeVisible();
 });
 
-test("TEXT-SIZE: modal slider persists and keeps 48px targets", async ({ page }) => {
-  await openFreshBoard(page);
+test("DASH-E2E-03 board shows 1 and 8 court layouts", async ({ page }) => {
+  const repository = createMemorySessionRepository();
+  await mockSessionApi(page, repository);
 
-  const trigger = page.getByRole("button", { name: "Text size" });
-  await expect(trigger).toBeVisible();
-  const triggerBox = await trigger.boundingBox();
-  expect(triggerBox?.height ?? 0).toBeGreaterThanOrEqual(48);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/settings");
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
 
-  await trigger.click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByRole("heading", { name: "Text size" })).toBeVisible();
+  await page.getByRole("button", { name: "−" }).click();
+  await page.getByRole("button", { name: "−" }).click();
+  await expect(page.getByText("1", { exact: true })).toBeVisible();
+  await page.getByRole("navigation", { name: "Club app" }).getByRole("link", { name: "Board" }).click();
+  await expect(page.getByRole("heading", { name: "Court 1" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Court 2" })).toHaveCount(0);
 
-  const slider = page.getByLabel("Choose text size");
-  const sliderBox = await slider.boundingBox();
-  expect(sliderBox?.height ?? 0).toBeGreaterThanOrEqual(48);
-
-  await slider.fill("4");
-  await expect(dialog.locator(".text-size-current")).toHaveText("Largest");
-  await expect
-    .poll(async () => page.locator("html").getAttribute("data-text-size"))
-    .toBe("largest");
-
-  await dialog.getByRole("button", { name: "Done" }).click();
-  await expect(dialog).toBeHidden();
-
-  await page.reload();
-  await expect
-    .poll(async () => page.locator("html").getAttribute("data-text-size"))
-    .toBe("largest");
-
-  await page.getByRole("button", { name: "Text size" }).click();
-  await expect(page.getByRole("dialog").locator(".text-size-current")).toHaveText(
-    "Largest",
-  );
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await page.getByRole("link", { name: "Settings" }).click();
+  for (let step = 0; step < 7; step += 1) {
+    await page.getByRole("button", { name: "+" }).click();
+  }
+  await expect(page.locator(".play-count-value")).toHaveText("8");
+  await page.getByRole("navigation", { name: "Club app" }).getByRole("link", { name: "Board" }).click();
+  await expect(page.getByRole("heading", { name: "Court 8" })).toBeVisible();
 });

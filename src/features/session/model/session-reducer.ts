@@ -28,6 +28,7 @@ import {
 export type SessionAction =
   | { type: "JOIN"; token: string; name: string }
   | { type: "START_MATCH"; playerId: string }
+  | { type: "START_NEXT_MATCH" }
   | { type: "END_MATCH"; playerId: string }
   | { type: "CLEAR_COURT"; courtId: string }
   | { type: "LEAVE"; playerId: string }
@@ -107,6 +108,7 @@ function syncCourtCount(
         sortOrder,
         name,
         nameKey: toNameKey(name),
+        startedAt: null,
       });
     }
     return {
@@ -135,6 +137,15 @@ function syncCourtCount(
   };
 }
 
+function clearCourtStartedAt(
+  courts: SessionCourt[],
+  courtId: string,
+): SessionCourt[] {
+  return courts.map((court) =>
+    court.id === courtId ? { ...court, startedAt: null } : court,
+  );
+}
+
 function returnCourtToWaiting(
   state: SessionState,
   courtId: string,
@@ -143,6 +154,7 @@ function returnCourtToWaiting(
   const joinedAt = nowIso(now);
   return {
     ...state,
+    courts: clearCourtStartedAt(state.courts, courtId),
     players: state.players.map((player) =>
       player.courtId === courtId
         ? {
@@ -154,6 +166,48 @@ function returnCourtToWaiting(
         : player,
     ),
   };
+}
+
+function assignPlayersToCourt(
+  state: SessionState,
+  courtId: string,
+  selectedIds: Set<string>,
+  now: Date,
+): SessionState {
+  const startedAt = nowIso(now);
+  return {
+    ...state,
+    courts: state.courts.map((court) =>
+      court.id === courtId ? { ...court, startedAt } : court,
+    ),
+    players: state.players.map((player) =>
+      selectedIds.has(player.id)
+        ? {
+            ...player,
+            status: "on_court" as const,
+            courtId,
+          }
+        : player,
+    ),
+  };
+}
+
+function startMatchFromWaiting(
+  state: SessionState,
+  selectedIds: Set<string>,
+  now: Date,
+): SessionTransition {
+  const freeCourt = getFreeCourts(state)[0];
+  if (!freeCourt) {
+    return unchanged(state, "no_free_court", "All courts are in use.");
+  }
+
+  const court = findCourt(state, freeCourt.id);
+  return changed(
+    assignPlayersToCourt(state, freeCourt.id, selectedIds, now),
+    `Playing on ${court?.name ?? freeCourt.name}.`,
+    { selectedPlayerIds: [...selectedIds], courtId: freeCourt.id },
+  );
 }
 
 export function reduceSession(
@@ -220,31 +274,36 @@ export function reduceSession(
         );
       }
 
-      const freeCourt = getFreeCourts(state)[0];
-      if (!freeCourt) {
+      if (getFreeCourts(state).length === 0) {
         return unchanged(state, "no_free_court", "All courts are in use.");
       }
 
       const others = waiting.filter((player) => player.id !== requester.id);
       const picked = pickRandomItems(others, required - 1, random);
       const selectedIds = new Set([requester.id, ...picked.map((player) => player.id)]);
+      return startMatchFromWaiting(state, selectedIds, now);
+    }
 
-      return changed(
-        {
-          ...state,
-          players: state.players.map((player) =>
-            selectedIds.has(player.id)
-              ? {
-                  ...player,
-                  status: "on_court" as const,
-                  courtId: freeCourt.id,
-                }
-              : player,
-          ),
-        },
-        `Playing on ${freeCourt.name}.`,
-        { selectedPlayerIds: [...selectedIds], courtId: freeCourt.id },
+    case "START_NEXT_MATCH": {
+      const required = requiredPlayers(state.settings.gameMode);
+      const waiting = getWaitingPlayers(state);
+      if (waiting.length < required) {
+        const needed = required - waiting.length;
+        return unchanged(
+          state,
+          "need_players",
+          needed === 1 ? "Need 1 more player." : `Need ${needed} more players.`,
+        );
+      }
+
+      if (getFreeCourts(state).length === 0) {
+        return unchanged(state, "no_free_court", "All courts are in use.");
+      }
+
+      const selectedIds = new Set(
+        waiting.slice(0, required).map((player) => player.id),
       );
+      return startMatchFromWaiting(state, selectedIds, now);
     }
 
     case "END_MATCH": {
@@ -284,6 +343,13 @@ export function reduceSession(
       const player = findPlayer(state, action.playerId);
       if (!player) {
         return unchanged(state, "player_not_found", "That player is not in the pool.");
+      }
+      if (player.status === "on_court") {
+        return unchanged(
+          state,
+          "not_waiting",
+          "Clear the court first.",
+        );
       }
       return changed(
         {
@@ -359,6 +425,13 @@ export function reduceSession(
     case "UPDATE_SETTINGS": {
       let next: SessionState = state;
       if (action.gameMode && action.gameMode !== state.settings.gameMode) {
+        if (getOccupiedCourtCount(state) > 0) {
+          return unchanged(
+            state,
+            "occupied_court",
+            "Clear courts before switching singles or doubles.",
+          );
+        }
         next = {
           ...next,
           settings: { ...next.settings, gameMode: action.gameMode },
@@ -396,7 +469,14 @@ export function reduceSession(
       if (state.players.length === 0) {
         return unchanged(state);
       }
-      return changed({ ...state, players: [] }, "Session reset. Everyone is out of the pool.");
+      return changed(
+        {
+          ...state,
+          courts: state.courts.map((court) => ({ ...court, startedAt: null })),
+          players: [],
+        },
+        "Session reset. Everyone is out of the pool.",
+      );
 
     default:
       return unchanged(state);

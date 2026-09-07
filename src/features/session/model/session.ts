@@ -33,6 +33,7 @@ export interface SessionCourt {
   sortOrder: number;
   name: string;
   nameKey: string;
+  startedAt: string | null;
 }
 
 export interface SessionPlayer {
@@ -91,6 +92,7 @@ export function createDefaultSession(): SessionState {
       sortOrder: n,
       name: `Court ${n}`,
       nameKey: `court ${n}`,
+      startedAt: null,
     })),
     players: [],
   };

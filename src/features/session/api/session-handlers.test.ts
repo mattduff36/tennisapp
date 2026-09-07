@@ -62,6 +62,20 @@ describe("session handlers", () => {
     expect(done.body.courts.every((court) => !court.occupied)).toBe(true);
   });
 
+  it("SESSION-API-READY-01 ready without token starts the next court", async () => {
+    const repository = seedWaiting(["Ada", "Bea", "Cara", "Dee", "Eve"]);
+    const ready = await handleReadySession(repository, {});
+    expect(ready.status).toBe(200);
+    if (!("courts" in ready.body)) {
+      throw new Error("expected session view");
+    }
+    expect(ready.body.courts[0]?.occupied).toBe(true);
+    expect(ready.body.courts[0]?.startedAt).toEqual(expect.any(String));
+    expect(ready.body.courts[0]?.players).toHaveLength(4);
+    expect(ready.body.waiting).toHaveLength(1);
+    expect(ready.body.me).toBeNull();
+  });
+
   it("GET reports playerMissing for a stale remembered id", async () => {
     const repository = seedWaiting(["Ada"]);
     const view = await handleGetSession(repository, "missing");

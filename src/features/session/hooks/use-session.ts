@@ -112,10 +112,10 @@ export function useSession(token: string | null) {
         method: "POST",
         body: JSON.stringify({ token, name }),
       }),
-    ready: (token: string) =>
+    ready: (token?: string | null) =>
       mutate("/api/session/ready", {
         method: "POST",
-        body: JSON.stringify({ token }),
+        body: JSON.stringify(token ? { token } : {}),
       }),
     done: (payload: { token?: string; courtId?: string }) =>
       mutate("/api/session/done", {

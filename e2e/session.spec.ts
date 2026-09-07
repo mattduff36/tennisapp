@@ -1,59 +1,12 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
-  handleDoneSession,
-  handleGetSession,
   handleJoinSession,
-  handleLeaveSession,
   handleReadySession,
 } from "../src/features/session/api/session-handlers";
 import { createMemorySessionRepository } from "../src/features/session/storage/memory-session-repository";
-import type { SessionRepository } from "../src/features/session/storage/session-repository";
+import { mockSessionApi } from "./mock-session-api";
 
-async function fulfill(
-  route: { fulfill: (response: { status: number; contentType: string; body: string }) => Promise<void> },
-  result: { status: number; body: unknown },
-) {
-  await route.fulfill({
-    status: result.status,
-    contentType: "application/json",
-    body: JSON.stringify(result.body),
-  });
-}
-
-async function mockSessionApi(page: Page, repository: SessionRepository) {
-  await page.route("**/api/session**", async (route) => {
-    const request = route.request();
-    const url = new URL(request.url());
-    const path = url.pathname;
-    const method = request.method();
-    const payload = request.postDataJSON();
-
-    if (method === "GET" && path === "/api/session") {
-      await fulfill(route, await handleGetSession(repository, url.searchParams.get("token")));
-      return;
-    }
-    if (method === "POST" && path === "/api/session/join") {
-      await fulfill(route, await handleJoinSession(repository, payload));
-      return;
-    }
-    if (method === "POST" && path === "/api/session/ready") {
-      await fulfill(route, await handleReadySession(repository, payload));
-      return;
-    }
-    if (method === "POST" && path === "/api/session/done") {
-      await fulfill(route, await handleDoneSession(repository, payload));
-      return;
-    }
-    if (method === "POST" && path === "/api/session/leave") {
-      await fulfill(route, await handleLeaveSession(repository, payload));
-      return;
-    }
-
-    await route.fallback();
-  });
-}
-
-test("SESSION-E2E-01 name → lobby → ready → assignment copy", async ({ page }) => {
+test("PLAY-E2E-01 name → lobby → ready → assignment copy", async ({ page }) => {
   const repository = createMemorySessionRepository();
   await handleJoinSession(repository, { token: "seed-2", name: "Bea" });
   await handleJoinSession(repository, { token: "seed-3", name: "Cara" });
@@ -76,10 +29,10 @@ test("SESSION-E2E-01 name → lobby → ready → assignment copy", async ({ pag
 
   await expect(page.getByRole("heading", { name: "Court 1" })).toBeVisible();
   await expect(page.getByText("Ada (you)")).toBeVisible();
-  await expect(page.getByText("Bea")).toBeVisible();
+  await expect(page.locator(".play-pool").getByText("Bea", { exact: true })).toBeVisible();
 });
 
-test("SESSION-E2E-02 duplicate name blocked", async ({ page }) => {
+test("PLAY-E2E-02 duplicate name blocked", async ({ page }) => {
   const repository = createMemorySessionRepository();
   await handleJoinSession(repository, { token: "seed-1", name: "Ada" });
   await mockSessionApi(page, repository);
@@ -98,7 +51,7 @@ test("SESSION-E2E-02 duplicate name blocked", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "What is your name?" })).toBeVisible();
 });
 
-test("SESSION-E2E-03 stale remembered token returns to the name screen", async ({
+test("PLAY-E2E-03 stale remembered token returns to the name screen", async ({
   page,
 }) => {
   const repository = createMemorySessionRepository();
@@ -115,7 +68,7 @@ test("SESSION-E2E-03 stale remembered token returns to the name screen", async (
   await expect(page.getByText(/no longer in the pool/i)).toBeVisible();
 });
 
-test("SESSION-E2E-04 settings can clear a court", async ({ page }) => {
+test("PLAY-E2E-04 settings can clear a court", async ({ page }) => {
   const repository = createMemorySessionRepository();
   await handleJoinSession(repository, { token: "t1", name: "Ada" });
   await handleJoinSession(repository, { token: "t2", name: "Bea" });
@@ -129,4 +82,28 @@ test("SESSION-E2E-04 settings can clear a court", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await page.getByRole("button", { name: "Clear court" }).click();
   await expect(page.getByText("Court 1 is free again.")).toBeVisible();
+});
+
+test("PLAY-UI-01 Play/Settings in top nav; Players ready/Leave in bottom dock", async ({
+  page,
+}) => {
+  const repository = createMemorySessionRepository();
+  await handleJoinSession(repository, { token: "seed-2", name: "Bea" });
+  await mockSessionApi(page, repository);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/play");
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+  await page.getByLabel("Your name").fill("Ada");
+  await page.getByRole("button", { name: "Join the pool" }).click();
+
+  const nav = page.getByRole("navigation", { name: "Club app" });
+  await expect(nav.getByRole("link", { name: "Play" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Settings" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Board" })).toBeVisible();
+
+  const dock = page.locator(".play-dock");
+  await expect(dock.getByRole("button", { name: "Need 2 more" })).toBeVisible();
+  await expect(dock.getByRole("button", { name: "Leave" })).toBeVisible();
 });

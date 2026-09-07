@@ -1,22 +1,21 @@
 import { expect, test } from "@playwright/test";
 import path from "node:path";
+import { createMemorySessionRepository } from "../src/features/session/storage/memory-session-repository";
+import { mockSessionApi } from "./mock-session-api";
 
 test("VISUAL-01: portrait and landscape grass-court board remain usable", async ({
   page,
 }, testInfo) => {
+  const repository = createMemorySessionRepository();
+  await mockSessionApi(page, repository);
+
   await page.goto("/");
-  await page.evaluate(() => window.localStorage.clear());
-  await page.reload();
   await expect(page.getByLabel("Add player")).toBeEnabled();
 
   await page.getByLabel("Add player").fill("Ada");
   await page.getByRole("button", { name: "Add" }).click();
   await page.getByLabel("Add player").fill("Bea");
   await page.getByRole("button", { name: "Add" }).click();
-  await page
-    .getByRole("button", { name: "Drag Ada onto a court, or tap to select" })
-    .click();
-  await page.getByRole("button", { name: "Place selected player on Court 1" }).click();
 
   await page.setViewportSize({ width: 820, height: 1180 });
   const portraitPath = path.join(testInfo.outputDir, "portrait.png");

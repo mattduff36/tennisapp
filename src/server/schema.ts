@@ -41,4 +41,5 @@ FROM (
     (3, 'Court 3', 'court 3')
 ) AS seed(sort_order, name, name_key)
 WHERE NOT EXISTS (SELECT 1 FROM courts)`,
+  `ALTER TABLE courts ADD COLUMN IF NOT EXISTS started_at timestamptz`,
 ] as const;

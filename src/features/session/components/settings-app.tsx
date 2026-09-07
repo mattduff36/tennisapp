@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { TextSizeControl } from "@/features/pegboard/components/text-size-control";
+import { useTextSize } from "@/features/pegboard/hooks/use-text-size";
 import { MAX_COURT_COUNT, MIN_COURT_COUNT } from "../model/session";
 import { useSession } from "../hooks/use-session";
 import { PlayNav } from "./play-nav";
+import { SessionTicker } from "./session-ticker";
 
 export function SettingsApp() {
   const session = useSession(null);
+  const { textSize, setTextSize } = useTextSize();
   const [busy, setBusy] = useState(false);
   const [courtNames, setCourtNames] = useState<Record<string, string>>({});
 
@@ -23,6 +27,7 @@ export function SettingsApp() {
 
   return (
     <div className="play-shell">
+      <PlayNav />
       <main className="play-main">
         <section className="play-card">
           <p className="scoreboard-label">Everyone can edit</p>
@@ -32,6 +37,12 @@ export function SettingsApp() {
             <p className="play-lede">Loading…</p>
           ) : (
             <>
+              <h2 className="play-section-title">Display</h2>
+              <p className="play-lede">
+                Text size is saved on this device only.
+              </p>
+              <TextSizeControl textSize={textSize} onChange={setTextSize} />
+
               <h2 className="play-section-title">Game</h2>
               <div className="play-toggle">
                 <button
@@ -41,7 +52,7 @@ export function SettingsApp() {
                       ? "play-primary"
                       : "play-secondary"
                   }
-                  disabled={busy}
+                  disabled={busy || view.courts.some((court) => court.occupied)}
                   onClick={() =>
                     run(() => session.saveSettings({ gameMode: "singles" }))
                   }
@@ -55,7 +66,7 @@ export function SettingsApp() {
                       ? "play-primary"
                       : "play-secondary"
                   }
-                  disabled={busy}
+                  disabled={busy || view.courts.some((court) => court.occupied)}
                   onClick={() =>
                     run(() => session.saveSettings({ gameMode: "doubles" }))
                   }
@@ -118,38 +129,40 @@ export function SettingsApp() {
                         }))
                       }
                     />
-                    <button
-                      type="button"
-                      className="play-secondary"
-                      disabled={busy}
-                      onClick={() =>
-                        run(() =>
-                          session.saveSettings({
-                            courts: [
-                              {
-                                id: court.id,
-                                name: courtNames[court.id] ?? court.name,
-                              },
-                            ],
-                          }),
-                        )
-                      }
-                    >
-                      Save name
-                    </button>
+                    <div className="play-button-row">
+                      <button
+                        type="button"
+                        className="play-secondary"
+                        disabled={busy}
+                        onClick={() =>
+                          run(() =>
+                            session.saveSettings({
+                              courts: [
+                                {
+                                  id: court.id,
+                                  name: courtNames[court.id] ?? court.name,
+                                },
+                              ],
+                            }),
+                          )
+                        }
+                      >
+                        Save name
+                      </button>
+                      {court.occupied ? (
+                        <button
+                          type="button"
+                          className="play-secondary"
+                          disabled={busy}
+                          onClick={() =>
+                            run(() => session.done({ courtId: court.id }))
+                          }
+                        >
+                          Clear court
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
-                  {court.occupied ? (
-                    <button
-                      type="button"
-                      className="play-secondary"
-                      disabled={busy}
-                      onClick={() =>
-                        run(() => session.done({ courtId: court.id }))
-                      }
-                    >
-                      Clear court
-                    </button>
-                  ) : null}
                 </div>
               ))}
 
@@ -180,6 +193,7 @@ export function SettingsApp() {
                         name={player.name}
                         detail={court.name}
                         busy={busy}
+                        canRemove={false}
                         onRename={(next) =>
                           run(() => session.renamePlayer(player.id, next))
                         }
@@ -212,7 +226,7 @@ export function SettingsApp() {
           )}
         </section>
       </main>
-      <PlayNav />
+      {view ? <SessionTicker view={view} /> : null}
     </div>
   );
 }
@@ -222,6 +236,7 @@ function PlayerEditor({
   name,
   detail,
   busy,
+  canRemove = true,
   onRename,
   onRemove,
 }: {
@@ -229,6 +244,7 @@ function PlayerEditor({
   name: string;
   detail: string;
   busy: boolean;
+  canRemove?: boolean;
   onRename: (name: string) => void;
   onRemove: () => void;
 }) {
@@ -245,27 +261,31 @@ function PlayerEditor({
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
         />
-        <button
-          type="button"
-          className="play-secondary"
-          disabled={busy}
-          onClick={() => onRename(draft)}
-        >
-          Save name
-        </button>
+        <div className="play-button-row">
+          <button
+            type="button"
+            className="play-secondary"
+            disabled={busy}
+            onClick={() => onRename(draft)}
+          >
+            Save name
+          </button>
+          {canRemove ? (
+            <button
+              type="button"
+              className="play-secondary"
+              disabled={busy}
+              onClick={() => {
+                if (window.confirm(`Remove ${name} from the pool?`)) {
+                  onRemove();
+                }
+              }}
+            >
+              Remove
+            </button>
+          ) : null}
+        </div>
       </div>
-      <button
-        type="button"
-        className="play-secondary"
-        disabled={busy}
-        onClick={() => {
-          if (window.confirm(`Remove ${name} from the pool?`)) {
-            onRemove();
-          }
-        }}
-      >
-        Remove
-      </button>
     </div>
   );
 }

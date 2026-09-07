@@ -130,6 +130,162 @@ describe("session reducer", () => {
       "default-court-3",
     ]);
     expect(getWaitingPlayers(result.state)).toHaveLength(1);
+    expect(
+      result.state.courts.find((court) => court.id === "default-court-1")?.startedAt,
+    ).toBe(T0.toISOString());
+    expect(
+      result.state.courts
+        .filter((court) => court.id !== "default-court-1")
+        .every((court) => court.startedAt === null),
+    ).toBe(true);
+  });
+
+  it("SESSION-START-01 token ready includes requester and sets startedAt", () => {
+    const state = joinMany(["Ada", "Bea", "Cara", "Dee"]);
+    const result = reduceSession(
+      state,
+      { type: "START_MATCH", playerId: "p-1" },
+      T0,
+      () => 0,
+    );
+    expect(result.changed).toBe(true);
+    expect(result.selectedPlayerIds).toContain("p-1");
+    expect(result.selectedPlayerIds).toHaveLength(4);
+    expect(
+      result.state.courts.find((court) => court.id === result.courtId)?.startedAt,
+    ).toBe(T0.toISOString());
+  });
+
+  it("SESSION-START-02 no-token ready picks longest waiters and sets startedAt", () => {
+    let state = createDefaultSession();
+    ["Ada", "Bea", "Cara", "Dee", "Eve"].forEach((name, index) => {
+      const joined = reduceSession(
+        state,
+        { type: "JOIN", token: `p-${index + 1}`, name },
+        new Date(T0.getTime() + index * 60_000),
+        Math.random,
+        () => `p-${index + 1}`,
+      );
+      expect(joined.error).toBeNull();
+      state = joined.state;
+    });
+
+    const result = reduceSession(state, { type: "START_NEXT_MATCH" }, T0);
+    expect(result.changed).toBe(true);
+    expect(result.selectedPlayerIds?.sort()).toEqual(["p-1", "p-2", "p-3", "p-4"]);
+    expect(getWaitingPlayers(result.state).map((player) => player.id)).toEqual(["p-5"]);
+    expect(
+      result.state.courts.find((court) => court.id === "default-court-1")?.startedAt,
+    ).toBe(T0.toISOString());
+  });
+
+  it("SESSION-START-03 helper ready blocked if too few waiters or no free court", () => {
+    const few = joinMany(["Ada", "Bea"]);
+    const needMore = reduceSession(few, { type: "START_NEXT_MATCH" }, T0);
+    expect(needMore.changed).toBe(false);
+    expect(needMore.error).toBe("need_players");
+
+    const enough = joinMany(["Ada", "Bea", "Cara", "Dee"]);
+    const oneCourt = {
+      ...enough,
+      courts: enough.courts.slice(0, 1),
+      settings: { ...enough.settings, courtCount: 1 },
+    };
+    const first = reduceSession(oneCourt, { type: "START_NEXT_MATCH" }, T0);
+    expect(first.changed).toBe(true);
+
+    const extra = reduceSession(
+      first.state,
+      { type: "JOIN", token: "p-5", name: "Eve" },
+      T0,
+      Math.random,
+      () => "p-5",
+    ).state;
+    const extra2 = reduceSession(
+      extra,
+      { type: "JOIN", token: "p-6", name: "Fay" },
+      T0,
+      Math.random,
+      () => "p-6",
+    ).state;
+    const extra3 = reduceSession(
+      extra2,
+      { type: "JOIN", token: "p-7", name: "Gus" },
+      T0,
+      Math.random,
+      () => "p-7",
+    ).state;
+    const extra4 = reduceSession(
+      extra3,
+      { type: "JOIN", token: "p-8", name: "Hal" },
+      T0,
+      Math.random,
+      () => "p-8",
+    ).state;
+
+    const noCourt = reduceSession(extra4, { type: "START_NEXT_MATCH" }, T0);
+    expect(noCourt.changed).toBe(false);
+    expect(noCourt.error).toBe("no_free_court");
+  });
+
+  it("SESSION-DURATION-01 startedAt cleared on end, clear, and reset", () => {
+    const started = reduceSession(
+      joinMany(["Ada", "Bea", "Cara", "Dee"]),
+      { type: "START_MATCH", playerId: "p-1" },
+      T0,
+      () => 0,
+    );
+    expect(
+      started.state.courts.find((court) => court.id === "default-court-1")?.startedAt,
+    ).toBe(T0.toISOString());
+
+    const ended = reduceSession(started.state, { type: "END_MATCH", playerId: "p-1" }, T0);
+    expect(
+      ended.state.courts.find((court) => court.id === "default-court-1")?.startedAt,
+    ).toBeNull();
+
+    const startedAgain = reduceSession(
+      ended.state,
+      { type: "START_MATCH", playerId: "p-1" },
+      T0,
+      () => 0,
+    );
+    const cleared = reduceSession(
+      startedAgain.state,
+      { type: "CLEAR_COURT", courtId: "default-court-1" },
+      T0,
+    );
+    expect(
+      cleared.state.courts.find((court) => court.id === "default-court-1")?.startedAt,
+    ).toBeNull();
+
+    const occupied = reduceSession(
+      cleared.state,
+      { type: "START_MATCH", playerId: "p-1" },
+      T0,
+      () => 0,
+    );
+    const reset = reduceSession(occupied.state, { type: "RESET_SESSION" }, T0);
+    expect(reset.state.courts.every((court) => court.startedAt === null)).toBe(true);
+    expect(reset.state.players).toHaveLength(0);
+  });
+
+  it("does not remove an on-court player and leave a short court", () => {
+    const started = reduceSession(
+      joinMany(["Ada", "Bea", "Cara", "Dee"]),
+      { type: "START_MATCH", playerId: "p-1" },
+      T0,
+      () => 0,
+    );
+    const removed = reduceSession(
+      started.state,
+      { type: "REMOVE_PLAYER", playerId: "p-1" },
+      T0,
+    );
+    expect(removed.changed).toBe(false);
+    expect(removed.error).toBe("not_waiting");
+    expect(removed.notice).toMatch(/clear the court/i);
+    expect(getCourtPlayers(removed.state, "default-court-1")).toHaveLength(4);
   });
 
   it("SESSION-READY-02 blocked if too few waiters or no free court", () => {
@@ -274,5 +430,14 @@ describe("session reducer", () => {
     });
     expect(blocked.error).toBe("occupied_court");
     expect(blocked.notice).toMatch(/still has players/i);
+
+    const modeBlocked = reduceSession(started.state, {
+      type: "UPDATE_SETTINGS",
+      gameMode: "doubles",
+    });
+    expect(modeBlocked.changed).toBe(false);
+    expect(modeBlocked.error).toBe("occupied_court");
+    expect(modeBlocked.notice).toMatch(/singles or doubles/i);
+    expect(getCourtPlayers(modeBlocked.state, "default-court-1")).toHaveLength(2);
   });
 });

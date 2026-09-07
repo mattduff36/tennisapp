@@ -116,7 +116,7 @@ a {
   margin: 0;
   padding: var(--space-4);
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   gap: var(--space-4);
   overflow: hidden;
 }
@@ -727,12 +727,10 @@ a {
   padding: 0.2rem;
   min-height: var(--tap);
   min-width: 0;
-  touch-action: none;
-  cursor: grab;
 }
 
 .player-main:active {
-  cursor: grabbing;
+  transform: none;
 }
 
 .player-name {
@@ -877,7 +875,7 @@ a {
 
 @media (min-width: 900px) {
   .pegboard-shell {
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   }
 
   .stats-ticker {
@@ -899,7 +897,7 @@ a {
   }
 
   .courts-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
 
@@ -910,7 +908,7 @@ a {
     height: 100vh;
     height: 100dvh;
     overflow: auto;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto auto auto auto;
   }
 
   .stats-ticker {
@@ -1020,38 +1018,102 @@ a {
   height: 100vh;
   height: 100dvh;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
   overflow: hidden;
 }
 
 .play-main {
+  display: flex;
+  flex-direction: column;
   overflow: auto;
-  padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-4) var(--space-4);
+  padding: var(--space-3) var(--space-4) var(--space-4);
 }
 
-.play-nav {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
+.play-top-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+  padding: max(var(--space-2), env(safe-area-inset-top)) var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(8, 34, 18, 0.35);
+}
+
+.play-top-nav a {
+  min-height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.15rem;
+  color: rgba(247, 247, 242, 0.62);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.play-top-nav a[aria-current="page"] {
+  color: var(--line);
+  box-shadow: inset 0 -2px 0 var(--ball);
+}
+
+.play-dock {
   padding: var(--space-2) var(--space-3) max(var(--space-2), env(safe-area-inset-bottom));
   background: var(--panel-strong);
   border-top: 1px solid var(--border-subtle);
 }
 
-.play-nav a {
-  min-height: 3.6rem;
+.play-dock-stack {
   display: grid;
-  place-items: center;
-  border-radius: 999px;
-  border: 1px solid var(--border-muted);
-  text-decoration: none;
-  font-weight: 700;
+  gap: var(--space-2);
 }
 
-.play-nav a[aria-current="page"] {
-  background: var(--ball);
-  color: var(--ink);
-  border-color: var(--ball);
+.play-button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.play-button-row:has(> :only-child) {
+  grid-template-columns: 1fr;
+}
+
+.play-ticker {
+  display: block;
+}
+
+.board-dock {
+  border-radius: var(--radius-lg);
+}
+
+.play-summary {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.play-summary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.play-summary-list li {
+  display: grid;
+  gap: 0.2rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+}
+
+.play-summary-list strong {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .play-card {
@@ -1104,6 +1166,10 @@ a {
 .play-toggle {
   display: grid;
   gap: var(--space-2);
+}
+
+.play-toggle {
+  grid-template-columns: 1fr 1fr;
 }
 
 .play-primary,
@@ -1184,8 +1250,8 @@ a {
   gap: var(--space-2);
 }
 
-.play-edit-controls .play-secondary,
-.play-edit-row .play-secondary {
-  min-height: var(--tap);
-  font-size: 1rem;
+.play-edit-controls .play-button-row .play-secondary,
+.play-edit-row .play-button-row .play-secondary {
+  min-height: 5.5rem;
+  font-size: 1.15rem;
 }

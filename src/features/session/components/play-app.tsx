@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   clearPlayerIdentity,
   createPlayerIdentity,
@@ -8,9 +8,13 @@ import {
 } from "../identity/player-identity";
 import { usePlayerIdentity } from "../hooks/use-player-identity";
 import { useSession } from "../hooks/use-session";
+import { readyButtonLabel } from "../model/session-copy";
 import { AssignmentScreen } from "./assignment-screen";
 import { NameScreen } from "./name-screen";
+import { PlayDock } from "./play-dock";
 import { PlayNav } from "./play-nav";
+import { SessionSummary } from "./session-summary";
+import { SessionTicker } from "./session-ticker";
 import { WaitingScreen } from "./waiting-screen";
 
 export function PlayApp() {
@@ -84,37 +88,85 @@ export function PlayApp() {
   }
 
   const me = session.view?.me;
+  const view = session.view;
+  const showSummary = Boolean(identity && view);
+  let dock: ReactNode = null;
+
+  if (identity && me?.status === "on_court") {
+    dock = (
+      <button
+        type="button"
+        className="play-primary"
+        disabled={busy}
+        onClick={() => void handleDone()}
+      >
+        I&apos;m done
+      </button>
+    );
+  } else if (identity && view) {
+    dock = confirming ? (
+      <div className="play-dock-stack">
+        <p className="play-lede">Start a court with you plus random players?</p>
+        <div className="play-button-row">
+          <button
+            type="button"
+            className="play-primary"
+            disabled={busy}
+            onClick={() => void handleReady()}
+          >
+            Yes, players ready
+          </button>
+          <button
+            type="button"
+            className="play-secondary"
+            disabled={busy}
+            onClick={() => setConfirming(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ) : (
+      <div className="play-button-row">
+        <button
+          type="button"
+          className="play-primary"
+          disabled={busy || !view.canStart}
+          onClick={() => setConfirming(true)}
+        >
+          {readyButtonLabel(view)}
+        </button>
+        <button
+          type="button"
+          className="play-secondary"
+          disabled={busy}
+          onClick={() => void handleLeave()}
+        >
+          Leave
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="play-shell">
+      <PlayNav />
       <main className="play-main">
-        {session.loading && !session.view ? (
+        {session.loading && !view ? (
           <p className="play-lede">Loading…</p>
         ) : !identity ? (
           <NameScreen notice={session.notice} busy={busy} onJoin={handleJoin} />
         ) : me?.status === "on_court" ? (
-          <AssignmentScreen
-            me={me}
-            notice={session.notice}
-            busy={busy}
-            onDone={handleDone}
-          />
-        ) : session.view ? (
-          <WaitingScreen
-            view={session.view}
-            notice={session.notice}
-            confirming={confirming}
-            busy={busy}
-            onConfirmReady={() => setConfirming(true)}
-            onCancelConfirm={() => setConfirming(false)}
-            onReady={handleReady}
-            onLeave={handleLeave}
-          />
+          <AssignmentScreen me={me} notice={session.notice} />
+        ) : view ? (
+          <WaitingScreen view={view} notice={session.notice} />
         ) : (
           <p className="play-lede">{session.notice ?? "Could not load the pool."}</p>
         )}
+        {showSummary && view ? <SessionSummary view={view} /> : null}
       </main>
-      <PlayNav />
+      {view ? <SessionTicker view={view} /> : null}
+      {dock ? <PlayDock>{dock}</PlayDock> : null}
     </div>
   );
 }

@@ -4,7 +4,7 @@
 
 ## World
 
-Working grass tennis court. The pegboard *is* the court: saturated green playing surface, structural white lines, tennis-ball markers, scoreboard labels. The phone pool uses the same materials with a scrolling play shell and two huge nav tabs.
+Working grass tennis court. The tablet board *is* the court: saturated green playing surface, structural white lines, tennis-ball markers, scoreboard labels. The phone pool uses the same materials with a quiet top nav, a scrolling ticker, and a pinned action dock.
 
 ## Palette
 
@@ -14,7 +14,7 @@ Working grass tennis court. The pegboard *is* the court: saturated green playing
 | `--line` | Court lines and primary text |
 | `--ball` | Selection / primary action |
 | `--accent` | Scoreboard labels |
-| `--warning` | Incomplete court / session notices |
+| `--warning` | Session notices |
 | `--danger` | Destructive actions |
 | `--panel` / `--panel-strong` | Translucent court plates |
 
@@ -25,23 +25,23 @@ Working grass tennis court. The pegboard *is* the court: saturated green playing
 
 ## Components
 
-- Waiting zone and three court zones as lined court plates (tablet)
+- Waiting zone and named court plates (tablet, 1–8 courts)
 - Player tiles with inline tennis-ball SVG
-- Court markings + net strip as authored SVG
 - Large pill buttons (≥48px tablet; `.play-primary` ~88px on phone)
-- Play / Settings footer tabs
+- Quiet Board / Play / Settings top nav
+- Phone action dock for Players ready / Leave / I'm done
+- Scrolling session ticker
 - Visible focus ring `--focus`
 
 ## Phone play shell
 
-- `.play-shell` is the viewport scrollport (`100dvh`) with safe-area padding
+- `.play-shell` is the viewport (`100dvh`): top nav, scrolling main, ticker, dock
 - `html` / `body` stay `overflow: hidden` for the tablet board
-- Name, waiting, and assignment screens stack one primary action at a time
+- Name, waiting, and assignment screens keep primary actions in the dock except Join
 
 ## Motion
 
-- Selected tile pulse
-- Successful court placement settle bounce
+- Ticker scroll
 - Disabled under `prefers-reduced-motion`
 
 ## Anti-patterns rejected

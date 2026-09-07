@@ -3,20 +3,26 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+const LINKS = [
+  { href: "/", label: "Board" },
+  { href: "/play", label: "Play" },
+  { href: "/settings", label: "Settings" },
+] as const;
+
 export function PlayNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="play-nav" aria-label="Player app">
-      <Link href="/play" aria-current={pathname === "/play" ? "page" : undefined}>
-        Play
-      </Link>
-      <Link
-        href="/settings"
-        aria-current={pathname === "/settings" ? "page" : undefined}
-      >
-        Settings
-      </Link>
+    <nav className="play-top-nav" aria-label="Club app">
+      {LINKS.map((link) => (
+        <Link
+          key={link.href}
+          href={link.href}
+          aria-current={pathname === link.href ? "page" : undefined}
+        >
+          {link.label}
+        </Link>
+      ))}
     </nav>
   );
 }

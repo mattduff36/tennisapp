@@ -1,11 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { TennisBall } from "../graphics/tennis-ball";
-import type { BoardState } from "../model/board";
-import { buildTickerSegments } from "../model/board-stats";
-
-const TICKER_REFRESH_MS = 30_000;
+import { TennisBall } from "@/features/pegboard/graphics/tennis-ball";
+import { buildSessionTickerSegments } from "../model/session-stats";
+import type { SessionView } from "../model/session-view";
 
 function TickerTrack({ segments }: { segments: string[] }) {
   return (
@@ -21,21 +18,11 @@ function TickerTrack({ segments }: { segments: string[] }) {
   );
 }
 
-export function StatsTicker({ board }: { board: BoardState }) {
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setNow(new Date());
-    }, TICKER_REFRESH_MS);
-
-    return () => window.clearInterval(id);
-  }, []);
-
-  const segments = buildTickerSegments(board, now);
+export function SessionTicker({ view }: { view: SessionView }) {
+  const segments = buildSessionTickerSegments(view);
 
   return (
-    <div className="stats-ticker" aria-hidden="true">
+    <div className="stats-ticker play-ticker" aria-hidden="true">
       <div className="stats-ticker-viewport">
         <div className="stats-ticker-rail">
           <TickerTrack segments={segments} />

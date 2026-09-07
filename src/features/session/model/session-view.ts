@@ -1,3 +1,4 @@
+import { formatDuration } from "@/lib/format-duration";
 import type { GameMode, PlayerStatus } from "./session";
 import type { SessionState } from "./session";
 import {
@@ -13,11 +14,18 @@ export type SessionPerson = {
   name: string;
 };
 
+export type SessionWaitingPerson = SessionPerson & {
+  joinedAt: string;
+  waitLabel: string;
+};
+
 export type SessionCourtView = {
   id: string;
   name: string;
   sortOrder: number;
   occupied: boolean;
+  startedAt: string | null;
+  durationLabel: string | null;
   players: SessionPerson[];
 };
 
@@ -36,7 +44,7 @@ export type SessionView = {
     gameMode: GameMode;
   };
   courts: SessionCourtView[];
-  waiting: SessionPerson[];
+  waiting: SessionWaitingPerson[];
   requiredPlayers: number;
   waitingCount: number;
   freeCourtCount: number;
@@ -50,6 +58,7 @@ export type SessionView = {
 export function toSessionView(
   state: SessionState,
   token: string | null,
+  now: Date = new Date(),
 ): SessionView {
   const availability = getStartAvailability(state);
   const mePlayer = token ? findPlayerByToken(state, token) : undefined;
@@ -73,17 +82,23 @@ export function toSessionView(
           id: player.id,
           name: player.name,
         }));
+        const occupied = players.length > 0;
         return {
           id: item.id,
           name: item.name,
           sortOrder: item.sortOrder,
-          occupied: players.length > 0,
+          occupied,
+          startedAt: occupied ? item.startedAt : null,
+          durationLabel:
+            occupied && item.startedAt ? formatDuration(item.startedAt, now) : null,
           players,
         };
       }),
     waiting: getWaitingPlayers(state).map((player) => ({
       id: player.id,
       name: player.name,
+      joinedAt: player.joinedAt,
+      waitLabel: formatDuration(player.joinedAt, now),
     })),
     requiredPlayers: availability.required,
     waitingCount: availability.waitingCount,

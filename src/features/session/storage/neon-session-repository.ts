@@ -19,6 +19,7 @@ type CourtRow = {
   sort_order: number;
   name: string;
   name_key: string;
+  started_at: Date | string | null;
 };
 
 type PlayerRow = {
@@ -60,6 +61,7 @@ function mapState(
       sortOrder: court.sort_order,
       name: court.name,
       nameKey: court.name_key,
+      startedAt: court.started_at ? toIso(court.started_at) : null,
     })),
     players: players.map((player) => ({
       id: player.id,
@@ -96,7 +98,7 @@ async function loadState(client: PoolClient): Promise<SessionState> {
   }
 
   const courtsResult = await client.query<CourtRow>(
-    "SELECT id, sort_order, name, name_key FROM courts ORDER BY sort_order",
+    "SELECT id, sort_order, name, name_key, started_at FROM courts ORDER BY sort_order",
   );
   const playersResult = await client.query<PlayerRow>(
     "SELECT id, token, name, name_key, status, court_id, joined_at FROM players",
@@ -126,13 +128,14 @@ async function saveState(client: PoolClient, state: SessionState): Promise<void>
 
   for (const court of state.courts) {
     await client.query(
-      `INSERT INTO courts (id, sort_order, name, name_key)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO courts (id, sort_order, name, name_key, started_at)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (id) DO UPDATE SET
          sort_order = EXCLUDED.sort_order,
          name = EXCLUDED.name,
-         name_key = EXCLUDED.name_key`,
-      [court.id, court.sortOrder, court.name, court.nameKey],
+         name_key = EXCLUDED.name_key,
+         started_at = EXCLUDED.started_at`,
+      [court.id, court.sortOrder, court.name, court.nameKey, court.startedAt],
     );
   }
 

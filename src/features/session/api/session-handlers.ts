@@ -131,17 +131,14 @@ export async function handleReadySession(
   repository: SessionRepository,
   payload: unknown,
 ): Promise<SessionHttpResult<SessionMutationBody | { error: string; notice: string }>> {
-  if (!isRecord(payload)) {
-    return { status: 400, body: { error: "invalid_body", notice: "Missing player." } };
+  const token = isRecord(payload) ? readString(payload.token) : null;
+  if (token) {
+    return applyForToken(repository, token, (playerId) => ({
+      type: "START_MATCH",
+      playerId,
+    }));
   }
-  const token = readString(payload.token);
-  if (!token) {
-    return { status: 400, body: { error: "invalid_body", notice: "Missing player." } };
-  }
-  return applyForToken(repository, token, (playerId) => ({
-    type: "START_MATCH",
-    playerId,
-  }));
+  return applyAction(repository, { type: "START_NEXT_MATCH" }, null);
 }
 
 export async function handleDoneSession(

@@ -46,10 +46,10 @@ export default function RootLayout({
     <html lang="en" className={`${display.variable} ${ui.variable}`}>
       <body>
         {/*
-          THESIS: The board is a working grass tennis court, not cards on wallpaper; Waiting and three courts are court geometry.
+          THESIS: The board is a working grass tennis court, not cards on wallpaper; Waiting and named courts are court geometry.
           OWN-WORLD: Saturated grass, structural white lines, tennis-ball markers, scoreboard labels, high-contrast touch plates.
-          STORY: A helper adds players, selects from Waiting, places onto a court, and returns them with one clear tap.
-          FIRST VIEWPORT: Header + add player, status strip, Waiting column, On Court with three court panels.
+          STORY: Helpers add waiters and tap Players ready; phones join the same pool and see the assigned court.
+          FIRST VIEWPORT: Header + add player, session status, Waiting column, On Court plates, Players ready dock.
           FORM: Pinned working-tennis-court Operate surface; seed user-pinned.
           FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
         */}

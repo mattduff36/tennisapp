@@ -1,5 +1,5 @@
-import { PegboardApp } from "@/features/pegboard/pegboard-app";
+import { BoardApp } from "@/features/session/components/board-app";
 
 export default function HomePage() {
-  return <PegboardApp />;
+  return <BoardApp />;
 }

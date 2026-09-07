@@ -1,9 +1,9 @@
 # Tennis Court Board
 
-Touch-friendly tennis club app with two surfaces:
+Touch-friendly tennis club app with two surfaces on one shared session:
 
-- **Tablet pegboard** at `/` — Waiting list and three On Court groups. State is saved in browser `localStorage` only.
-- **Phone PWA** at `/play` — Players join a shared Neon waiting pool, start one court at a time, and see who they are playing with.
+- **Tablet board** at `/` — live waiting list and courts from Neon. Helpers can add walk-up names, start a court, clear a court, and open Settings.
+- **Phone PWA** at `/play` — players join the same pool, start a court, and see who they are playing with.
 
 ## Stack
 
@@ -43,12 +43,12 @@ Prefer a phone-sized viewport for `/play`. Add the PWA from `/play` (`start_url`
 
 ## How to use the tablet board
 
-1. Add players by name.
-2. Tap a Waiting player to select them.
-3. Tap **Place here** on a court (max 4).
-4. Tap an on-court player to return them to Waiting.
-5. Rename/delete from Waiting actions (delete asks for confirmation).
-6. **Reset board** clears only this app’s local storage key after confirmation.
+1. Add walk-up players by name, or wait for phones to join.
+2. When enough people are waiting and a court is free, tap **Players ready**.
+3. Occupied courts show partners and how long they have been on.
+4. **Clear court** returns that whole court to waiting.
+5. **Settings** changes courts, singles/doubles, names, and display text size.
+6. **Reset session** clears the shared pool after confirmation.
 
 ## How to use the player app
 
@@ -63,12 +63,11 @@ This phone remembers you in `localStorage` (`tennisapp.me.v1`). There is no logi
 
 ## Persistence and origin isolation
 
-- Tablet storage key: `tennisapp.pegboard.v1`
 - Phone identity key: `tennisapp.me.v1`
+- Display text size: local to this browser
 - Shared pool: Neon tables `app_settings`, `courts`, `players`
-- Tablet schema is versioned. Corrupt or newer data is not overwritten automatically; use **Reset local board**.
 - Browser storage is origin-specific. Preview deployments, alternate domains, and production do **not** share `localStorage`.
-- Clearing site data removes the remembered name and the tablet board.
+- Clearing site data removes the remembered name and text size.
 
 ### Canonical Surface URL
 

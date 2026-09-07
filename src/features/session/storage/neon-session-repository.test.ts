@@ -4,6 +4,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import {
   handleDoneSession,
   handleJoinSession,
+  handlePatchSettings,
   handleReadySession,
   handleResetSession,
 } from "../api/session-handlers";
@@ -42,6 +43,7 @@ describeDb("neon session repository", () => {
 
   it("SESSION-READY-03 / persist: concurrent Ready cannot share players; done rewrites waiting rows", async () => {
     await handleResetSession(repository);
+    await handlePatchSettings(repository, { gameMode: "doubles", courtCount: 3 });
     const tokens = [
       crypto.randomUUID(),
       crypto.randomUUID(),

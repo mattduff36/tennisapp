@@ -1,17 +1,11 @@
-"use client";
-
 import type { SessionMeView } from "../model/session-view";
 
 export function AssignmentScreen({
   me,
   notice,
-  busy,
-  onDone,
 }: {
   me: SessionMeView;
   notice: string | null;
-  busy: boolean;
-  onDone: () => void;
 }) {
   return (
     <section className="play-card play-assignment">
@@ -25,9 +19,6 @@ export function AssignmentScreen({
           <li key={partner.id}>{partner.name}</li>
         ))}
       </ul>
-      <button type="button" className="play-primary" disabled={busy} onClick={onDone}>
-        I&apos;m done
-      </button>
     </section>
   );
 }
