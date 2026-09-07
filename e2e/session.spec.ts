@@ -32,6 +32,28 @@ test("PLAY-E2E-01 name → lobby → ready → assignment copy", async ({ page }
   await expect(page.locator(".play-pool").getByText("Bea", { exact: true })).toBeVisible();
 });
 
+test("PLAY-E2E-05 helper-added name can be claimed", async ({ page }) => {
+  const repository = createMemorySessionRepository();
+  await handleJoinSession(repository, {
+    token: "helper-ada",
+    name: "Ada",
+    claimed: false,
+  });
+  await mockSessionApi(page, repository);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/play");
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+
+  await page.getByLabel("Your name").fill("Ada");
+  await page.getByRole("button", { name: "Join the pool" }).click();
+  await expect(page.getByRole("heading", { name: "Is that you?" })).toBeVisible();
+  await page.getByRole("button", { name: "Claim this name" }).click();
+  await expect(page.getByRole("heading", { name: "In the pool" })).toBeVisible();
+  await expect(page.getByText("Ada (you)")).toBeVisible();
+});
+
 test("PLAY-E2E-02 duplicate name blocked", async ({ page }) => {
   const repository = createMemorySessionRepository();
   await handleJoinSession(repository, { token: "seed-1", name: "Ada" });
@@ -82,6 +104,30 @@ test("PLAY-E2E-04 settings can clear a court", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await page.getByRole("button", { name: "Clear court" }).click();
   await expect(page.getByText("Court 1 is free again.")).toBeVisible();
+});
+
+test("PLAY-E2E-06 settings PIN locks shared controls", async ({ page }) => {
+  const repository = createMemorySessionRepository();
+  await mockSessionApi(page, repository);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/settings");
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await page.getByLabel("New PIN").fill("1234");
+  await page.getByLabel("Confirm PIN").fill("1234");
+  await page.getByRole("button", { name: "Turn PIN on" }).click();
+  await expect(page.getByText("Club PIN is on.")).toBeVisible();
+
+  await page.context().clearCookies({ name: "tennisapp.settings.unlock" });
+  await page.reload();
+  await expect(page.getByText("Unlock with the club PIN")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Unlock" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Singles" })).toHaveCount(0);
+
+  await page.getByLabel("Club PIN").fill("1234");
+  await page.getByRole("button", { name: "Unlock" }).click();
+  await expect(page.getByText("Settings unlocked.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Singles" })).toBeVisible();
 });
 
 test("PLAY-UI-01 Play/Settings in top nav; Players ready/Leave in bottom dock", async ({

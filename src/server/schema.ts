@@ -3,6 +3,10 @@ export const SCHEMA_STATEMENTS = [
   id integer PRIMARY KEY CHECK (id = 1),
   court_count integer NOT NULL CHECK (court_count >= 1 AND court_count <= 8),
   game_mode text NOT NULL CHECK (game_mode IN ('singles', 'doubles')),
+  ready_rule text NOT NULL DEFAULT 'longest_wait' CHECK (ready_rule IN ('longest_wait', 'random')),
+  pin_hash text,
+  pin_salt text,
+  pin_unlock_token text,
   updated_at timestamptz NOT NULL DEFAULT now()
 )`,
   `CREATE TABLE IF NOT EXISTS courts (
@@ -16,6 +20,7 @@ export const SCHEMA_STATEMENTS = [
   token uuid NOT NULL UNIQUE,
   name text NOT NULL,
   name_key text NOT NULL UNIQUE,
+  claimed boolean NOT NULL DEFAULT true,
   status text NOT NULL CHECK (status IN ('waiting', 'on_court')),
   court_id uuid REFERENCES courts (id),
   joined_at timestamptz NOT NULL DEFAULT now(),
@@ -42,4 +47,9 @@ FROM (
 ) AS seed(sort_order, name, name_key)
 WHERE NOT EXISTS (SELECT 1 FROM courts)`,
   `ALTER TABLE courts ADD COLUMN IF NOT EXISTS started_at timestamptz`,
+  `ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS ready_rule text NOT NULL DEFAULT 'longest_wait'`,
+  `ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS pin_hash text`,
+  `ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS pin_salt text`,
+  `ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS pin_unlock_token text`,
+  `ALTER TABLE players ADD COLUMN IF NOT EXISTS claimed boolean NOT NULL DEFAULT true`,
 ] as const;

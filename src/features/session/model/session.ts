@@ -1,9 +1,9 @@
 export type GameMode = "singles" | "doubles";
 export type PlayerStatus = "waiting" | "on_court";
+export type ReadyRule = "longest_wait" | "random";
 
 export const MIN_COURT_COUNT = 1;
 export const MAX_COURT_COUNT = 8;
-export const SESSION_SETTINGS_ID = 1;
 
 export const REQUIRED_PLAYERS: Record<GameMode, number> = {
   singles: 2,
@@ -13,6 +13,7 @@ export const REQUIRED_PLAYERS: Record<GameMode, number> = {
 export type SessionErrorCode =
   | "empty_name"
   | "name_taken"
+  | "name_unclaimed"
   | "player_not_found"
   | "not_waiting"
   | "need_players"
@@ -26,6 +27,7 @@ export type SessionErrorCode =
 export interface SessionSettings {
   courtCount: number;
   gameMode: GameMode;
+  readyRule: ReadyRule;
 }
 
 export interface SessionCourt {
@@ -41,6 +43,7 @@ export interface SessionPlayer {
   token: string;
   name: string;
   nameKey: string;
+  claimed: boolean;
   status: PlayerStatus;
   courtId: string | null;
   joinedAt: string;
@@ -81,11 +84,16 @@ export function isGameMode(value: unknown): value is GameMode {
   return value === "singles" || value === "doubles";
 }
 
+export function isReadyRule(value: unknown): value is ReadyRule {
+  return value === "longest_wait" || value === "random";
+}
+
 export function createDefaultSession(): SessionState {
   return {
     settings: {
       courtCount: 3,
       gameMode: "doubles",
+      readyRule: "longest_wait",
     },
     courts: [1, 2, 3].map((n) => ({
       id: `default-court-${n}`,

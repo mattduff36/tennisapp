@@ -3,7 +3,13 @@ import { buildSessionTickerSegments } from "./session-stats";
 import type { SessionView } from "./session-view";
 
 const view: SessionView = {
-  settings: { courtCount: 2, gameMode: "singles" },
+  settings: {
+    courtCount: 2,
+    gameMode: "singles",
+    readyRule: "longest_wait",
+    pinEnabled: false,
+    unlocked: true,
+  },
   courts: [
     {
       id: "c1",

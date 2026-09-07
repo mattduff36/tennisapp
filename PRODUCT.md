@@ -28,7 +28,7 @@ The tablet board is a live view of the shared session: waiting list and named co
 ## Operating Context
 
 - Both surfaces read and write the same Neon session. The lobby polls every 3 seconds.
-- Phone identity is remembered in `localStorage` (`tennisapp.me.v1`). No accounts. Duplicate names are rejected.
+- Phone identity is remembered in `localStorage` (`tennisapp.me.v1`). No accounts. Duplicate claimed names are rejected. A helper-added name can be claimed on a phone.
 - Text size is a local display preference on this device.
 
 ## Capabilities and Constraints
@@ -37,18 +37,18 @@ Tablet (`/`):
 
 - Add walk-up names to the pool (no phone identity is stored).
 - See waiting players and occupied courts, including match duration.
-- Tap **Players ready** to fill the next free court with the longest-waiting players.
+- Tap **Players ready** to fill the next free court. The Settings ready rule picks longest-waiting or random players. A phone that taps Ready is always included.
 - Rename/remove players, clear a court, reset the session, open Settings.
 
 Phone (`/play`, `/settings`):
 
 - Ask “What is your name?” and join the pool.
-- Remember this phone’s player; a taken name must be changed.
-- Show the waiting list; **Players ready** fills one free court (you plus random waiters).
+- Remember this phone’s player; a taken name must be changed unless it is an unclaimed board name you can claim.
+- Show the waiting list; **Players ready** fills one free court (you plus partners chosen by the ready rule).
 - Assignment screen: court name, partners, **I'm done** (whole court returns to waiting).
-- Settings: court count, singles/doubles, court names, rename/remove players, clear court, reset session, text size.
+- Settings: court count, singles/doubles, ready rule, court names, rename/remove players, clear court, reset session, text size, optional club PIN (off by default).
 
-No push notifications and no settings PIN.
+No push notifications. A club PIN can lock Settings and Reset when turned on.
 
 ## Brand Commitments
 

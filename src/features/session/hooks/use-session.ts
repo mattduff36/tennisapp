@@ -107,8 +107,13 @@ export function useSession(token: string | null) {
     loading,
     setNotice,
     refresh,
-    join: (token: string, name: string) =>
+    join: (token: string, name: string, claimed = true) =>
       mutate("/api/session/join", {
+        method: "POST",
+        body: JSON.stringify({ token, name, claimed }),
+      }),
+    claim: (token: string, name: string) =>
+      mutate("/api/session/claim", {
         method: "POST",
         body: JSON.stringify({ token, name }),
       }),
@@ -142,6 +147,20 @@ export function useSession(token: string | null) {
       mutate("/api/session/player", {
         method: "DELETE",
         body: JSON.stringify({ playerId: playerIdToRemove }),
+      }),
+    updatePin: (payload: {
+      action: "enable" | "change" | "disable";
+      pin?: string;
+      currentPin?: string;
+    }) =>
+      mutate("/api/session/pin", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    unlockPin: (pin: string) =>
+      mutate("/api/session/pin/unlock", {
+        method: "POST",
+        body: JSON.stringify({ pin }),
       }),
   };
 }

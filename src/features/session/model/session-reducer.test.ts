@@ -6,6 +6,7 @@ import {
   getFreeCourts,
   getStartAvailability,
   getWaitingPlayers,
+  pickRandomItems,
 } from "./session-selectors";
 
 const T0 = new Date("2026-09-06T12:00:00.000Z");
@@ -42,6 +43,7 @@ describe("session reducer", () => {
       token: "token-a",
       name: "Ada",
       nameKey: "ada",
+      claimed: true,
       status: "waiting",
     });
 
@@ -104,6 +106,142 @@ describe("session reducer", () => {
     expect(steal.state.players.find((player) => player.token === "public-id")?.name).toBe(
       "Bea",
     );
+  });
+
+  it("SESSION-CLAIM-01 claim unclaimed helper name", () => {
+    const helper = reduceSession(
+      createDefaultSession(),
+      { type: "JOIN", token: "helper-token", name: "Ada", claimed: false },
+      T0,
+      Math.random,
+      () => "ada-id",
+    );
+    expect(helper.state.players[0]).toMatchObject({
+      id: "ada-id",
+      claimed: false,
+      joinedAt: T0.toISOString(),
+    });
+
+    const blocked = reduceSession(
+      helper.state,
+      { type: "JOIN", token: "phone-token", name: "ada" },
+      T0,
+    );
+    expect(blocked.error).toBe("name_unclaimed");
+
+    const claimed = reduceSession(
+      helper.state,
+      { type: "CLAIM", token: "phone-token", name: "Ada" },
+      T0,
+    );
+    expect(claimed.changed).toBe(true);
+    expect(claimed.state.players).toHaveLength(1);
+    expect(claimed.state.players[0]).toMatchObject({
+      id: "ada-id",
+      token: "phone-token",
+      claimed: true,
+      joinedAt: T0.toISOString(),
+    });
+  });
+
+  it("SESSION-CLAIM-02 claimed name stays taken", () => {
+    const phone = reduceSession(
+      createDefaultSession(),
+      { type: "JOIN", token: "phone-a", name: "Ada" },
+      T0,
+      Math.random,
+      () => "ada-id",
+    );
+    const taken = reduceSession(
+      phone.state,
+      { type: "JOIN", token: "phone-b", name: "ada" },
+      T0,
+    );
+    expect(taken.error).toBe("name_taken");
+
+    const steal = reduceSession(
+      phone.state,
+      { type: "CLAIM", token: "phone-b", name: "Ada" },
+      T0,
+    );
+    expect(steal.changed).toBe(false);
+    expect(steal.error).toBe("name_taken");
+    expect(steal.state.players[0]?.token).toBe("phone-a");
+  });
+
+  it("SESSION-CLAIM-03 claim while on court keeps assignment", () => {
+    const helper = reduceSession(
+      joinMany(["Bea", "Cara", "Dee"]),
+      { type: "JOIN", token: "helper-token", name: "Ada", claimed: false },
+      T0,
+      Math.random,
+      () => "p-ada",
+    ).state;
+    const started = reduceSession(
+      helper,
+      { type: "START_NEXT_MATCH" },
+      T0,
+    );
+    expect(started.state.players.find((player) => player.id === "p-ada")?.status).toBe(
+      "on_court",
+    );
+
+    const claimed = reduceSession(
+      started.state,
+      { type: "CLAIM", token: "phone-token", name: "Ada" },
+      T0,
+    );
+    const ada = claimed.state.players.find((player) => player.id === "p-ada");
+    expect(claimed.changed).toBe(true);
+    expect(ada).toMatchObject({
+      token: "phone-token",
+      claimed: true,
+      status: "on_court",
+      courtId: started.courtId,
+    });
+  });
+
+  it("SESSION-READY-RULE-01 phone longest wait includes requester plus earliest others", () => {
+    let state = createDefaultSession();
+    ["Ada", "Bea", "Cara", "Dee", "Eve"].forEach((name, index) => {
+      state = reduceSession(
+        state,
+        { type: "JOIN", token: `p-${index + 1}`, name },
+        new Date(T0.getTime() + index * 60_000),
+        Math.random,
+        () => `p-${index + 1}`,
+      ).state;
+    });
+    const result = reduceSession(
+      state,
+      { type: "START_MATCH", playerId: "p-5" },
+      T0,
+      () => 0.99,
+    );
+    expect(result.selectedPlayerIds?.sort()).toEqual(["p-1", "p-2", "p-3", "p-5"]);
+  });
+
+  it("SESSION-READY-RULE-02 tablet random uses pickRandomItems", () => {
+    let state = createDefaultSession();
+    state = {
+      ...state,
+      settings: { ...state.settings, readyRule: "random" },
+    };
+    ["Ada", "Bea", "Cara", "Dee", "Eve"].forEach((name, index) => {
+      state = reduceSession(
+        state,
+        { type: "JOIN", token: `p-${index + 1}`, name },
+        new Date(T0.getTime() + index * 60_000),
+        Math.random,
+        () => `p-${index + 1}`,
+      ).state;
+    });
+    const random = () => 0.99;
+    const expected = pickRandomItems(getWaitingPlayers(state), 4, random).map(
+      (player) => player.id,
+    );
+    const result = reduceSession(state, { type: "START_NEXT_MATCH" }, T0, random);
+    expect(result.selectedPlayerIds).toEqual(expected);
   });
 
   it("SESSION-READY-01 requester included; random others; one court", () => {

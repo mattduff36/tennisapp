@@ -1,3 +1,4 @@
+import type { ReadyRule } from "./session";
 import type { SessionView } from "./session-view";
 
 export function readyButtonLabel(view: SessionView): string {
@@ -10,4 +11,22 @@ export function readyButtonLabel(view: SessionView): string {
   return view.playersNeeded === 1
     ? "Need 1 more"
     : `Need ${view.playersNeeded} more`;
+}
+
+export function readyConfirmCopy(
+  readyRule: ReadyRule,
+  surface: "phone" | "board",
+): string {
+  if (surface === "phone") {
+    return readyRule === "random"
+      ? "Start a court with you plus random players?"
+      : "Start a court with you plus the longest-waiting players?";
+  }
+  return readyRule === "random"
+    ? "Start a court with random waiting players?"
+    : "Start a court with the longest-waiting players?";
+}
+
+export function courtDensityForCount(count: number): "comfortable" | "compact" {
+  return count >= 5 ? "compact" : "comfortable";
 }

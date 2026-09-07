@@ -3,8 +3,10 @@ import { SCHEMA_STATEMENTS } from "@/server/schema";
 import { withClient } from "@/server/db";
 import {
   isGameMode,
+  isReadyRule,
   type GameMode,
   type PlayerStatus,
+  type ReadyRule,
   type SessionState,
 } from "../model/session";
 import type { SessionApplyResult, SessionRepository } from "./session-repository";
@@ -12,6 +14,7 @@ import type { SessionApplyResult, SessionRepository } from "./session-repository
 type SettingsRow = {
   court_count: number;
   game_mode: string;
+  ready_rule: string;
 };
 
 type CourtRow = {
@@ -27,6 +30,7 @@ type PlayerRow = {
   token: string;
   name: string;
   name_key: string;
+  claimed: boolean;
   status: string;
   court_id: string | null;
   joined_at: Date | string;
@@ -50,11 +54,15 @@ function mapState(
   const gameMode: GameMode = isGameMode(settings.game_mode)
     ? settings.game_mode
     : "doubles";
+  const readyRule: ReadyRule = isReadyRule(settings.ready_rule)
+    ? settings.ready_rule
+    : "longest_wait";
 
   return {
     settings: {
       courtCount: settings.court_count,
       gameMode,
+      readyRule,
     },
     courts: courts.map((court) => ({
       id: court.id,
@@ -68,6 +76,7 @@ function mapState(
       token: player.token,
       name: player.name,
       nameKey: player.name_key,
+      claimed: player.claimed !== false,
       status: player.status as PlayerStatus,
       courtId: player.court_id,
       joinedAt: toIso(player.joined_at),
@@ -90,7 +99,7 @@ async function ensureSchemaOnce(): Promise<void> {
 
 async function loadState(client: PoolClient): Promise<SessionState> {
   const settingsResult = await client.query<SettingsRow>(
-    "SELECT court_count, game_mode FROM app_settings WHERE id = 1",
+    "SELECT court_count, game_mode, ready_rule FROM app_settings WHERE id = 1",
   );
   const settings = settingsResult.rows[0];
   if (!settings) {
@@ -101,7 +110,7 @@ async function loadState(client: PoolClient): Promise<SessionState> {
     "SELECT id, sort_order, name, name_key, started_at FROM courts ORDER BY sort_order",
   );
   const playersResult = await client.query<PlayerRow>(
-    "SELECT id, token, name, name_key, status, court_id, joined_at FROM players",
+    "SELECT id, token, name, name_key, claimed, status, court_id, joined_at FROM players",
   );
 
   return mapState(settings, courtsResult.rows, playersResult.rows);
@@ -110,9 +119,9 @@ async function loadState(client: PoolClient): Promise<SessionState> {
 async function saveState(client: PoolClient, state: SessionState): Promise<void> {
   await client.query(
     `UPDATE app_settings
-     SET court_count = $1, game_mode = $2, updated_at = now()
+     SET court_count = $1, game_mode = $2, ready_rule = $3, updated_at = now()
      WHERE id = 1`,
-    [state.settings.courtCount, state.settings.gameMode],
+    [state.settings.courtCount, state.settings.gameMode, state.settings.readyRule],
   );
 
   await client.query("DELETE FROM players");
@@ -141,12 +150,13 @@ async function saveState(client: PoolClient, state: SessionState): Promise<void>
 
   for (const player of state.players) {
     await client.query(
-      `INSERT INTO players (id, token, name, name_key, status, court_id, joined_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO players (id, token, name, name_key, claimed, status, court_id, joined_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT (id) DO UPDATE SET
          token = EXCLUDED.token,
          name = EXCLUDED.name,
          name_key = EXCLUDED.name_key,
+         claimed = EXCLUDED.claimed,
          status = EXCLUDED.status,
          court_id = EXCLUDED.court_id,
          joined_at = EXCLUDED.joined_at`,
@@ -155,17 +165,13 @@ async function saveState(client: PoolClient, state: SessionState): Promise<void>
         player.token,
         player.name,
         player.nameKey,
+        player.claimed,
         player.status,
         player.courtId,
         player.joinedAt,
       ],
     );
   }
-}
-
-export async function migrateSessionSchema(): Promise<void> {
-  schemaReady = null;
-  await ensureSchemaOnce();
 }
 
 export function createNeonSessionRepository(): SessionRepository {
@@ -196,8 +202,4 @@ export function createNeonSessionRepository(): SessionRepository {
       });
     },
   };
-}
-
-export function __resetSchemaReadyForTests(): void {
-  schemaReady = null;
 }

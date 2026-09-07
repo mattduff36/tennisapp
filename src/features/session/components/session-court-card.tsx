@@ -3,16 +3,20 @@ import type { SessionCourtView } from "../model/session-view";
 
 export function SessionCourtCard({
   court,
+  density = "comfortable",
   disabled,
   onClear,
 }: {
   court: SessionCourtView;
+  density?: "comfortable" | "compact";
   disabled: boolean;
   onClear: (courtId: string) => void;
 }) {
   return (
     <section
-      className={`zone court-zone${court.occupied ? " is-full" : ""}`}
+      className={`zone court-zone${court.occupied ? " is-full" : ""}${
+        density === "compact" ? " is-compact" : ""
+      }`}
       aria-labelledby={`court-${court.id}-heading`}
     >
       <div className="zone-header">
@@ -47,7 +51,9 @@ export function SessionCourtCard({
         </>
       ) : (
         <p className="empty-copy">
-          Free — tap Players ready when enough people are waiting.
+          {density === "compact"
+            ? "Free"
+            : "Free — tap Players ready when enough people are waiting."}
         </p>
       )}
     </section>

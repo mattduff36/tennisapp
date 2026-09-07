@@ -1,5 +1,5 @@
 import { formatDuration } from "@/lib/format-duration";
-import type { GameMode, PlayerStatus } from "./session";
+import type { GameMode, PlayerStatus, ReadyRule } from "./session";
 import type { SessionState } from "./session";
 import {
   findCourt,
@@ -38,10 +38,18 @@ export type SessionMeView = {
   partners: SessionPerson[];
 };
 
+export type PinAccess = {
+  enabled: boolean;
+  unlocked: boolean;
+};
+
 export type SessionView = {
   settings: {
     courtCount: number;
     gameMode: GameMode;
+    readyRule: ReadyRule;
+    pinEnabled: boolean;
+    unlocked: boolean;
   };
   courts: SessionCourtView[];
   waiting: SessionWaitingPerson[];
@@ -59,6 +67,7 @@ export function toSessionView(
   state: SessionState,
   token: string | null,
   now: Date = new Date(),
+  pin: PinAccess = { enabled: false, unlocked: true },
 ): SessionView {
   const availability = getStartAvailability(state);
   const mePlayer = token ? findPlayerByToken(state, token) : undefined;
@@ -73,6 +82,9 @@ export function toSessionView(
     settings: {
       courtCount: state.settings.courtCount,
       gameMode: state.settings.gameMode,
+      readyRule: state.settings.readyRule,
+      pinEnabled: pin.enabled,
+      unlocked: pin.enabled ? pin.unlocked : true,
     },
     courts: state.courts
       .slice()

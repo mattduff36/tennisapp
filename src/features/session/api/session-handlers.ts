@@ -1,7 +1,11 @@
-import { isGameMode, type GameMode } from "../model/session";
+import { isGameMode, isReadyRule, type GameMode, type ReadyRule } from "../model/session";
 import { findPlayerByToken } from "../model/session-selectors";
 import { reduceSession, type SessionAction } from "../model/session-reducer";
-import { toSessionView, type SessionView } from "../model/session-view";
+import {
+  toSessionView,
+  type PinAccess,
+  type SessionView,
+} from "../model/session-view";
 import type { SessionRepository } from "../storage/session-repository";
 import {
   isRecord,
@@ -16,10 +20,13 @@ export type SessionMutationBody = SessionView & {
   error: string | null;
 };
 
+const OPEN_PIN: PinAccess = { enabled: false, unlocked: true };
+
 function applyAction(
   repository: SessionRepository,
   action: SessionAction,
   token: string | null,
+  pin: PinAccess = OPEN_PIN,
 ): Promise<SessionHttpResult<SessionMutationBody>> {
   return repository.transact<SessionHttpResult<SessionMutationBody>>((state) => {
     const result = reduceSession(state, action);
@@ -30,7 +37,7 @@ function applyAction(
         value: {
           status: statusForSessionError(result.error),
           body: {
-            ...toSessionView(state, token),
+            ...toSessionView(state, token, new Date(), pin),
             notice: result.notice,
             error: result.error,
           },
@@ -44,7 +51,7 @@ function applyAction(
       value: {
         status: 200,
         body: {
-          ...toSessionView(result.state, token),
+          ...toSessionView(result.state, token, new Date(), pin),
           notice: result.notice,
           error: null,
         },
@@ -67,7 +74,7 @@ function applyForToken(
         value: {
           status: 404,
           body: {
-            ...toSessionView(state, token),
+            ...toSessionView(state, token, new Date(), OPEN_PIN),
             notice: "You are not in the pool.",
             error: "player_not_found",
           },
@@ -82,7 +89,7 @@ function applyForToken(
         value: {
           status: statusForSessionError(result.error),
           body: {
-            ...toSessionView(state, token),
+            ...toSessionView(state, token, new Date(), OPEN_PIN),
             notice: result.notice,
             error: result.error,
           },
@@ -95,7 +102,7 @@ function applyForToken(
       value: {
         status: 200,
         body: {
-          ...toSessionView(result.state, token),
+          ...toSessionView(result.state, token, new Date(), OPEN_PIN),
           notice: result.notice,
           error: null,
         },
@@ -107,9 +114,10 @@ function applyForToken(
 export async function handleGetSession(
   repository: SessionRepository,
   token: string | null,
+  pin: PinAccess = OPEN_PIN,
 ): Promise<SessionHttpResult<SessionView>> {
   const state = await repository.load();
-  return { status: 200, body: toSessionView(state, token) };
+  return { status: 200, body: toSessionView(state, token, new Date(), pin) };
 }
 
 export async function handleJoinSession(
@@ -124,7 +132,23 @@ export async function handleJoinSession(
   if (!token || !name) {
     return { status: 400, body: { error: "invalid_body", notice: "Send a name and token." } };
   }
-  return applyAction(repository, { type: "JOIN", token, name }, token);
+  const claimed = payload.claimed !== false;
+  return applyAction(repository, { type: "JOIN", token, name, claimed }, token);
+}
+
+export async function handleClaimSession(
+  repository: SessionRepository,
+  payload: unknown,
+): Promise<SessionHttpResult<SessionMutationBody | { error: string; notice: string }>> {
+  if (!isRecord(payload)) {
+    return { status: 400, body: { error: "invalid_body", notice: "Send a name and token." } };
+  }
+  const token = readString(payload.token);
+  const name = readString(payload.name);
+  if (!token || !name) {
+    return { status: 400, body: { error: "invalid_body", notice: "Send a name and token." } };
+  }
+  return applyAction(repository, { type: "CLAIM", token, name }, token);
 }
 
 export async function handleReadySession(
@@ -181,14 +205,34 @@ export async function handleLeaveSession(
 
 export async function handleResetSession(
   repository: SessionRepository,
-): Promise<SessionHttpResult<SessionMutationBody>> {
-  return applyAction(repository, { type: "RESET_SESSION" }, null);
+  pin: PinAccess = OPEN_PIN,
+): Promise<SessionHttpResult<SessionMutationBody | { error: string; notice: string }>> {
+  if (pin.enabled && !pin.unlocked) {
+    return {
+      status: 401,
+      body: {
+        error: "pin_required",
+        notice: "Unlock Settings with the club PIN first.",
+      },
+    };
+  }
+  return applyAction(repository, { type: "RESET_SESSION" }, null, pin);
 }
 
 export async function handlePatchSettings(
   repository: SessionRepository,
   payload: unknown,
+  pin: PinAccess = OPEN_PIN,
 ): Promise<SessionHttpResult<SessionMutationBody | { error: string; notice: string }>> {
+  if (pin.enabled && !pin.unlocked) {
+    return {
+      status: 401,
+      body: {
+        error: "pin_required",
+        notice: "Unlock Settings with the club PIN first.",
+      },
+    };
+  }
   if (!isRecord(payload)) {
     return { status: 400, body: { error: "invalid_body", notice: "Invalid settings." } };
   }
@@ -201,6 +245,7 @@ export async function handlePatchSettings(
 
     const gameMode = payload.gameMode;
     const courtCount = payload.courtCount;
+    const readyRule = payload.readyRule;
     if (gameMode !== undefined && !isGameMode(gameMode)) {
       return {
         next: state,
@@ -221,12 +266,27 @@ export async function handlePatchSettings(
         },
       };
     }
+    if (readyRule !== undefined && !isReadyRule(readyRule)) {
+      return {
+        next: state,
+        changed: false,
+        value: {
+          status: 400,
+          body: { error: "invalid_settings", notice: "Choose longest wait or random." },
+        },
+      };
+    }
 
-    if (gameMode !== undefined || courtCount !== undefined) {
+    if (
+      gameMode !== undefined ||
+      courtCount !== undefined ||
+      readyRule !== undefined
+    ) {
       const result = reduceSession(current, {
         type: "UPDATE_SETTINGS",
         gameMode: gameMode as GameMode | undefined,
         courtCount: courtCount as number | undefined,
+        readyRule: readyRule as ReadyRule | undefined,
       });
       if (result.error) {
         return {
@@ -235,7 +295,7 @@ export async function handlePatchSettings(
           value: {
             status: statusForSessionError(result.error),
             body: {
-              ...toSessionView(state, null),
+              ...toSessionView(state, null, new Date(), pin),
               notice: result.notice,
               error: result.error,
             },
@@ -269,9 +329,9 @@ export async function handlePatchSettings(
             value: {
               status: statusForSessionError(result.error),
               body: {
-                ...toSessionView(state, null),
-                notice: result.notice,
-                error: result.error,
+              ...toSessionView(state, null, new Date(), pin),
+              notice: result.notice,
+              error: result.error,
               },
             },
           };
@@ -287,7 +347,7 @@ export async function handlePatchSettings(
       value: {
         status: 200,
         body: {
-          ...toSessionView(current, null),
+          ...toSessionView(current, null, new Date(), pin),
           notice,
           error: null,
         },

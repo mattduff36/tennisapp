@@ -59,6 +59,11 @@ test("DASH-E2E-03 board shows 1 and 8 court layouts", async ({ page }) => {
   await page.getByRole("navigation", { name: "Club app" }).getByRole("link", { name: "Board" }).click();
   await expect(page.getByRole("heading", { name: "Court 1" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Court 2" })).toHaveCount(0);
+  await expect(page.locator(".courts-grid")).toHaveAttribute("data-court-count", "1");
+  await expect(page.locator(".courts-grid")).toHaveAttribute(
+    "data-court-density",
+    "comfortable",
+  );
 
   await page.getByRole("link", { name: "Settings" }).click();
   for (let step = 0; step < 7; step += 1) {
@@ -67,4 +72,6 @@ test("DASH-E2E-03 board shows 1 and 8 court layouts", async ({ page }) => {
   await expect(page.locator(".play-count-value")).toHaveText("8");
   await page.getByRole("navigation", { name: "Club app" }).getByRole("link", { name: "Board" }).click();
   await expect(page.getByRole("heading", { name: "Court 8" })).toBeVisible();
+  await expect(page.locator(".courts-grid")).toHaveAttribute("data-court-count", "8");
+  await expect(page.locator(".courts-grid")).toHaveAttribute("data-court-density", "compact");
 });

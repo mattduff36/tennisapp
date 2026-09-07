@@ -47,14 +47,14 @@ Prefer a phone-sized viewport for `/play`. Add the PWA from `/play` (`start_url`
 2. When enough people are waiting and a court is free, tap **Players ready**.
 3. Occupied courts show partners and how long they have been on.
 4. **Clear court** returns that whole court to waiting.
-5. **Settings** changes courts, singles/doubles, names, and display text size.
-6. **Reset session** clears the shared pool after confirmation.
+5. **Settings** changes courts, singles/doubles, ready rule, names, display text size, and an optional club PIN.
+6. **Reset session** clears the shared pool after confirmation. If a club PIN is on, unlock Settings first.
 
 ## How to use the player app
 
-1. Enter your name. If that name is already in the pool, pick another.
+1. Enter your name. If a helper already added you, claim that name. If the name is already on a phone, pick another.
 2. Wait in the pool. When enough players are waiting and a court is free, tap **Players ready**.
-3. You plus random waiters are assigned to the first free court.
+3. You plus partners chosen by the Settings ready rule are assigned to the first free court.
 4. Open the app again (or stay on the lobby — it polls) to see the court and partners.
 5. **I'm done** returns everyone on that court to waiting.
 6. **Settings** can change court count, singles/doubles, names, and reset the session.

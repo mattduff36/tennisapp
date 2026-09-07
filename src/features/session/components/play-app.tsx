@@ -8,7 +8,7 @@ import {
 } from "../identity/player-identity";
 import { usePlayerIdentity } from "../hooks/use-player-identity";
 import { useSession } from "../hooks/use-session";
-import { readyButtonLabel } from "../model/session-copy";
+import { readyButtonLabel, readyConfirmCopy } from "../model/session-copy";
 import { AssignmentScreen } from "./assignment-screen";
 import { NameScreen } from "./name-screen";
 import { PlayDock } from "./play-dock";
@@ -21,20 +21,45 @@ export function PlayApp() {
   const identity = usePlayerIdentity();
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [claimable, setClaimable] = useState(false);
   const session = useSession(identity?.token ?? null);
+
+  async function persistJoin(
+    token: string,
+    result: Awaited<ReturnType<typeof session.join>>,
+  ) {
+    if (result.ok && "me" in result.body && result.body.me) {
+      writePlayerIdentity({
+        version: 2,
+        token,
+        name: result.body.me.name,
+      });
+      setClaimable(false);
+    }
+  }
 
   async function handleJoin(name: string) {
     setBusy(true);
     try {
       const next = identity ?? createPlayerIdentity(name);
-      const result = await session.join(next.token, name);
-      if (result.ok && "me" in result.body && result.body.me) {
-        writePlayerIdentity({
-          version: 2,
-          token: next.token,
-          name: result.body.me.name,
-        });
-      }
+      const result = await session.join(next.token, name, true);
+      const error =
+        typeof result.body === "object" && result.body && "error" in result.body
+          ? result.body.error
+          : null;
+      setClaimable(error === "name_unclaimed");
+      await persistJoin(next.token, result);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleClaim(name: string) {
+    setBusy(true);
+    try {
+      const next = identity ?? createPlayerIdentity(name);
+      const result = await session.claim(next.token, name);
+      await persistJoin(next.token, result);
     } finally {
       setBusy(false);
     }
@@ -106,7 +131,9 @@ export function PlayApp() {
   } else if (identity && view) {
     dock = confirming ? (
       <div className="play-dock-stack">
-        <p className="play-lede">Start a court with you plus random players?</p>
+            <p className="play-lede">
+              {readyConfirmCopy(view.settings.readyRule, "phone")}
+            </p>
         <div className="play-button-row">
           <button
             type="button"
@@ -155,7 +182,13 @@ export function PlayApp() {
         {session.loading && !view ? (
           <p className="play-lede">Loading…</p>
         ) : !identity ? (
-          <NameScreen notice={session.notice} busy={busy} onJoin={handleJoin} />
+          <NameScreen
+            notice={session.notice}
+            busy={busy}
+            claimable={claimable}
+            onJoin={handleJoin}
+            onClaim={handleClaim}
+          />
         ) : me?.status === "on_court" ? (
           <AssignmentScreen me={me} notice={session.notice} />
         ) : view ? (

@@ -7,6 +7,7 @@ import {
   requiredPlayers,
   toNameKey,
   type GameMode,
+  type ReadyRule,
   type SessionCourt,
   type SessionErrorCode,
   type SessionPlayer,
@@ -26,7 +27,8 @@ import {
 } from "./session-selectors";
 
 export type SessionAction =
-  | { type: "JOIN"; token: string; name: string }
+  | { type: "JOIN"; token: string; name: string; claimed?: boolean }
+  | { type: "CLAIM"; token: string; name: string }
   | { type: "START_MATCH"; playerId: string }
   | { type: "START_NEXT_MATCH" }
   | { type: "END_MATCH"; playerId: string }
@@ -39,6 +41,7 @@ export type SessionAction =
       type: "UPDATE_SETTINGS";
       courtCount?: number;
       gameMode?: GameMode;
+      readyRule?: ReadyRule;
     }
   | { type: "RESET_SESSION" };
 
@@ -192,6 +195,18 @@ function assignPlayersToCourt(
   };
 }
 
+function pickByReadyRule<T>(
+  items: readonly T[],
+  count: number,
+  readyRule: ReadyRule,
+  random: () => number,
+): T[] {
+  if (readyRule === "random") {
+    return pickRandomItems(items, count, random);
+  }
+  return items.slice(0, count);
+}
+
 function startMatchFromWaiting(
   state: SessionState,
   selectedIds: Set<string>,
@@ -230,7 +245,15 @@ export function reduceSession(
       }
 
       const nameKey = toNameKey(name);
-      if (findPlayerByNameKey(state, nameKey)) {
+      const taken = findPlayerByNameKey(state, nameKey);
+      if (taken) {
+        if (!taken.claimed) {
+          return unchanged(
+            state,
+            "name_unclaimed",
+            "That name is on the board. Is that you?",
+          );
+        }
         return unchanged(
           state,
           "name_taken",
@@ -243,6 +266,7 @@ export function reduceSession(
         token: action.token,
         name,
         nameKey,
+        claimed: action.claimed !== false,
         status: "waiting",
         courtId: null,
         joinedAt: nowIso(now),
@@ -251,6 +275,52 @@ export function reduceSession(
       return changed(
         { ...state, players: [...state.players, player] },
         `${name} joined the pool.`,
+      );
+    }
+
+    case "CLAIM": {
+      const name = normalizeDisplayName(action.name);
+      if (!name) {
+        return unchanged(state, "empty_name", "Enter a player name.");
+      }
+
+      const nameKey = toNameKey(name);
+      const target = findPlayerByNameKey(state, nameKey);
+      if (!target) {
+        return unchanged(state, "player_not_found", "That name is not in the pool.");
+      }
+
+      const byToken = findPlayerByToken(state, action.token);
+      if (byToken && byToken.id !== target.id) {
+        return unchanged(
+          state,
+          "name_taken",
+          "You are already in the pool as another name.",
+        );
+      }
+
+      if (target.claimed && target.token !== action.token) {
+        return unchanged(
+          state,
+          "name_taken",
+          "That name is already in the pool. Pick a different name.",
+        );
+      }
+
+      if (target.claimed && target.token === action.token) {
+        return unchanged(state);
+      }
+
+      return changed(
+        {
+          ...state,
+          players: state.players.map((player) =>
+            player.id === target.id
+              ? { ...player, token: action.token, claimed: true }
+              : player,
+          ),
+        },
+        `${target.name} is now on this phone.`,
       );
     }
 
@@ -279,7 +349,12 @@ export function reduceSession(
       }
 
       const others = waiting.filter((player) => player.id !== requester.id);
-      const picked = pickRandomItems(others, required - 1, random);
+      const picked = pickByReadyRule(
+        others,
+        required - 1,
+        state.settings.readyRule,
+        random,
+      );
       const selectedIds = new Set([requester.id, ...picked.map((player) => player.id)]);
       return startMatchFromWaiting(state, selectedIds, now);
     }
@@ -301,7 +376,9 @@ export function reduceSession(
       }
 
       const selectedIds = new Set(
-        waiting.slice(0, required).map((player) => player.id),
+        pickByReadyRule(waiting, required, state.settings.readyRule, random).map(
+          (player) => player.id,
+        ),
       );
       return startMatchFromWaiting(state, selectedIds, now);
     }
@@ -435,6 +512,12 @@ export function reduceSession(
         next = {
           ...next,
           settings: { ...next.settings, gameMode: action.gameMode },
+        };
+      }
+      if (action.readyRule && action.readyRule !== next.settings.readyRule) {
+        next = {
+          ...next,
+          settings: { ...next.settings, readyRule: action.readyRule },
         };
       }
       if (

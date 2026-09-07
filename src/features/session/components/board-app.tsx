@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PlayerManager } from "@/features/pegboard/components/player-manager";
 import { TextSizeControl } from "@/features/pegboard/components/text-size-control";
 import { TennisBall } from "@/features/pegboard/graphics/tennis-ball";
 import { useTextSize } from "@/features/pegboard/hooks/use-text-size";
+import { clearLegacyPegboardStorage } from "../identity/clear-legacy-storage";
 import { createPlayerIdentity } from "../identity/player-identity";
 import { useSession } from "../hooks/use-session";
-import { readyButtonLabel } from "../model/session-copy";
+import {
+  courtDensityForCount,
+  readyButtonLabel,
+  readyConfirmCopy,
+} from "../model/session-copy";
 import { SessionCourtCard } from "./session-court-card";
 import { SessionTicker } from "./session-ticker";
 import { SessionWaitingList } from "./session-waiting-list";
@@ -19,6 +24,12 @@ export function BoardApp() {
   const [confirming, setConfirming] = useState(false);
   const view = session.view;
   const canInteract = Boolean(view) && !session.loading && !busy;
+  const courtCount = view?.settings.courtCount ?? 0;
+  const courtDensity = courtDensityForCount(courtCount);
+
+  useEffect(() => {
+    clearLegacyPegboardStorage();
+  }, []);
 
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
@@ -31,7 +42,7 @@ export function BoardApp() {
 
   function handleAdd(name: string) {
     const next = createPlayerIdentity(name);
-    void run(() => session.join(next.token, name));
+    void run(() => session.join(next.token, name, false));
   }
 
   function handleRename(playerId: string, currentName: string) {
@@ -57,7 +68,16 @@ export function BoardApp() {
     ) {
       return;
     }
-    void run(() => session.reset());
+    void run(async () => {
+      const result = await session.reset();
+      const error =
+        typeof result.body === "object" && result.body && "error" in result.body
+          ? result.body.error
+          : null;
+      if (error === "pin_required") {
+        session.setNotice("Unlock Settings with the club PIN first.");
+      }
+    });
   }
 
   async function handleReady() {
@@ -135,11 +155,16 @@ export function BoardApp() {
               <h2>On Court</h2>
               <p>Players ready fills one free court from the waiting pool</p>
             </div>
-            <div className="courts-grid">
+            <div
+              className="courts-grid"
+              data-court-count={courtCount || undefined}
+              data-court-density={courtCount ? courtDensity : undefined}
+            >
               {(view?.courts ?? []).map((court) => (
                 <SessionCourtCard
                   key={court.id}
                   court={court}
+                  density={courtDensity}
                   disabled={!canInteract}
                   onClear={(courtId) =>
                     void run(() => session.done({ courtId }))
@@ -155,7 +180,7 @@ export function BoardApp() {
         {confirming ? (
           <div className="play-dock-stack">
             <p className="play-lede">
-              Start a court with the longest-waiting players?
+              {readyConfirmCopy(view?.settings.readyRule ?? "longest_wait", "board")}
             </p>
             <div className="play-button-row">
               <button
