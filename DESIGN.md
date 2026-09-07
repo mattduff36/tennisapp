@@ -40,6 +40,13 @@ Working grass tennis court. The tablet board *is* the court: saturated green pla
 - Name, waiting, and assignment screens keep primary actions in the dock except Join
 - From `900px`, Play uses two columns (pool or assignment | court summary) and Settings uses two, then three from `1200px` (Display+Game | Courts | Players)
 
+## Tablet / desktop board
+
+- From `900px` the board is a scoreboard, not a stretched phone: waiting is a sidebar (`15.5–20rem`), courts take the remaining width
+- Add-player and the board ready dock stay capped (`22–24rem` / `28rem`); board chrome uses tap-height (`--tap`, 48px), not the phone `5.5rem` controls
+- Court plates size to their players; the board stage scrolls if needed, not the individual court
+- Status sits as a compact toolbar (session + notice, reset trailing)
+
 ## Motion
 
 - Ticker scroll

@@ -571,6 +571,12 @@ a {
   background: rgba(8, 34, 18, 0.68);
 }
 
+.waiting-zone,
+.court-zone {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(216, 243, 92, 0.4) transparent;
+}
+
 .on-court-heading {
   padding: 0 var(--space-1);
   margin-bottom: 0;
@@ -904,22 +910,122 @@ a {
     grid-template-rows: auto minmax(0, 1fr);
   }
 
+  .pegboard-main {
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-3);
+  }
+
   .stats-ticker {
     display: block;
   }
 
   .app-header {
-    grid-template-columns: 1fr 1.1fr;
-    align-items: end;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+    align-items: center;
+  }
+
+  .player-manager {
+    width: 100%;
+    max-width: 22rem;
+    justify-self: end;
+  }
+
+  .pegboard-main .player-manager-row input,
+  .pegboard-main .player-manager-row .play-primary,
+  .pegboard-main .status-bar .play-danger,
+  .pegboard-main .board-dock .play-primary,
+  .pegboard-main .board-dock .play-secondary,
+  .pegboard-main .court-zone .play-secondary {
+    min-height: var(--tap);
+    font-size: 1.05rem;
+  }
+
+  .pegboard-main .player-manager-row input {
+    font-size: 1rem;
+  }
+
+  .pegboard-main .player-manager-row .play-primary {
+    min-width: 6.5rem;
+    padding-inline: 1.15rem;
   }
 
   .status-bar {
-    grid-template-columns: 1.1fr 1.4fr auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .status-bar .play-danger {
+    margin-left: auto;
+    min-width: 9.5rem;
+    padding-inline: 1.15rem;
+    font-size: 1rem;
   }
 
   .board-grid {
-    grid-template-columns: minmax(240px, 0.85fr) 1.45fr;
+    grid-template-columns: minmax(15.5rem, 18rem) minmax(0, 1fr);
     align-items: stretch;
+  }
+
+  .board-stage {
+    overflow: auto;
+  }
+
+  .courts-column {
+    height: auto;
+    align-self: start;
+    grid-template-rows: auto auto;
+  }
+
+  .courts-grid,
+  .courts-grid > * {
+    height: auto;
+  }
+
+  .courts-grid {
+    align-content: start;
+    align-items: start;
+  }
+
+  .court-zone {
+    height: max-content;
+    min-height: 14rem;
+    align-self: start;
+    overflow: visible;
+  }
+
+  .court-zone .player-list {
+    min-height: min-content;
+    gap: var(--space-2);
+  }
+
+  .court-zone .player-tile.court-player {
+    padding: var(--space-2);
+  }
+
+  .court-zone .player-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pegboard-main .court-zone .play-secondary {
+    width: 100%;
+  }
+
+  .pegboard-main .board-dock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: transparent;
+    border: none;
+    padding-block: var(--space-1);
+  }
+
+  .pegboard-main .board-dock > * {
+    width: min(28rem, 100%);
   }
 
   .courts-grid[data-court-count="1"] {
@@ -941,7 +1047,7 @@ a {
   }
 
   .courts-grid[data-court-count="3"] {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(12rem, 1fr));
   }
 
   .courts-grid[data-court-count="4"] {
@@ -1140,6 +1246,10 @@ a {
 .play-top-nav a[aria-current="page"] {
   color: var(--line);
   box-shadow: inset 0 -2px 0 var(--ball);
+}
+
+html[data-device="phone"] .play-nav-board {
+  display: none;
 }
 
 .play-dock {
@@ -1347,6 +1457,48 @@ a {
   width: 100%;
 }
 
+.play-join-wrap:has(.play-wizard-hero) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.play-wizard-hero,
+.play-wizard-step {
+  justify-items: center;
+  text-align: center;
+}
+
+.play-wizard-hero {
+  width: 100%;
+}
+
+.play-ball-action {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  width: min(20rem, 100%);
+  padding: var(--space-4);
+  border: none;
+  background: transparent;
+  color: var(--line);
+}
+
+.play-ball-action-icon {
+  width: min(12rem, 56vw);
+  height: min(12rem, 56vw);
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.28));
+}
+
+.play-ball-action span {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .play-desktop-grid {
   flex: 1;
   display: flex;
@@ -1417,13 +1569,15 @@ a {
 }
 
 @media (min-width: 1280px) {
-  .board-dock {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  .board-grid {
+    grid-template-columns: minmax(16.5rem, 20rem) minmax(0, 1fr);
   }
 
-  .board-dock > * {
-    width: min(56rem, 100%);
+  .player-manager {
+    max-width: 24rem;
+  }
+
+  .app-header {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
   }
 }
