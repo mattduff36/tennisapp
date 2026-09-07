@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo_Black, IBM_Plex_Sans } from "next/font/google";
+import { headers } from "next/headers";
+import { isPhoneUserAgent } from "@/lib/is-phone";
 import "./globals.css";
 
 const display = Archivo_Black({
@@ -44,13 +46,20 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const userAgent = (await headers()).get("user-agent");
+  const device = isPhoneUserAgent(userAgent) ? "phone" : "other";
+
   return (
-    <html lang="en" className={`${display.variable} ${ui.variable}`}>
+    <html
+      lang="en"
+      className={`${display.variable} ${ui.variable}`}
+      data-device={device}
+    >
       <body>
         {/*
           THESIS: The board is a working grass tennis court, not cards on wallpaper; Waiting and named courts are court geometry.

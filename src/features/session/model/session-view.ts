@@ -63,6 +63,13 @@ export type SessionView = {
   playerMissing: boolean;
 };
 
+export function isSessionEmpty(view: {
+  waiting: readonly unknown[];
+  courts: readonly { occupied: boolean }[];
+}): boolean {
+  return view.waiting.length === 0 && view.courts.every((court) => !court.occupied);
+}
+
 export function toSessionView(
   state: SessionState,
   token: string | null,

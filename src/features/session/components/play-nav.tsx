@@ -18,6 +18,7 @@ export function PlayNav() {
         <Link
           key={link.href}
           href={link.href}
+          className={link.href === "/" ? "play-nav-board" : undefined}
           aria-current={pathname === link.href ? "page" : undefined}
         >
           {link.label}

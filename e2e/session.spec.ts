@@ -1,10 +1,17 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
   handleJoinSession,
   handleReadySession,
 } from "../src/features/session/api/session-handlers";
 import { createMemorySessionRepository } from "../src/features/session/storage/memory-session-repository";
 import { mockSessionApi } from "./mock-session-api";
+
+const IPHONE_UA =
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
+
+async function openJoinForm(page: Page) {
+  await page.getByRole("button", { name: "Join this session" }).click();
+}
 
 test("PLAY-E2E-01 name → lobby → ready → assignment copy", async ({ page }) => {
   const repository = createMemorySessionRepository();
@@ -18,6 +25,7 @@ test("PLAY-E2E-01 name → lobby → ready → assignment copy", async ({ page }
   await page.evaluate(() => window.localStorage.clear());
   await page.reload();
 
+  await openJoinForm(page);
   await expect(page.getByRole("heading", { name: "What is your name?" })).toBeVisible();
   await page.getByLabel("Your name").fill("Ada");
   await page.getByRole("button", { name: "Join the pool" }).click();
@@ -46,6 +54,7 @@ test("PLAY-E2E-05 helper-added name can be claimed", async ({ page }) => {
   await page.evaluate(() => window.localStorage.clear());
   await page.reload();
 
+  await openJoinForm(page);
   await page.getByLabel("Your name").fill("Ada");
   await page.getByRole("button", { name: "Join the pool" }).click();
   await expect(page.getByRole("heading", { name: "Is that you?" })).toBeVisible();
@@ -64,6 +73,7 @@ test("PLAY-E2E-02 duplicate name blocked", async ({ page }) => {
   await page.evaluate(() => window.localStorage.clear());
   await page.reload();
 
+  await openJoinForm(page);
   await page.getByLabel("Your name").fill("ada");
   await page.getByRole("button", { name: "Join the pool" }).click();
 
@@ -73,7 +83,7 @@ test("PLAY-E2E-02 duplicate name blocked", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "What is your name?" })).toBeVisible();
 });
 
-test("PLAY-E2E-03 stale remembered token returns to the name screen", async ({
+test("PLAY-E2E-03 stale remembered token returns to the setup wizard", async ({
   page,
 }) => {
   const repository = createMemorySessionRepository();
@@ -86,7 +96,7 @@ test("PLAY-E2E-03 stale remembered token returns to the name screen", async ({
     );
   });
   await page.goto("/play");
-  await expect(page.getByRole("heading", { name: "What is your name?" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start session" })).toBeVisible();
   await expect(page.getByText(/no longer in the pool/i)).toBeVisible();
 });
 
@@ -141,6 +151,7 @@ test("PLAY-UI-01 Play/Settings in top nav; Players ready/Leave in bottom dock", 
   await page.goto("/play");
   await page.evaluate(() => window.localStorage.clear());
   await page.reload();
+  await openJoinForm(page);
   await page.getByLabel("Your name").fill("Ada");
   await page.getByRole("button", { name: "Join the pool" }).click();
 
@@ -171,5 +182,58 @@ test("PLAY-UI-02 in-app nav stays inside Board / Play / Settings", async ({
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await page.getByRole("navigation", { name: "Club app" }).getByRole("link", { name: "Play" }).click();
   await expect(page).toHaveURL("/play");
-  await expect(page.getByRole("heading", { name: "What is your name?" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start session" })).toBeVisible();
+});
+
+test("PLAY-E2E-08 live pool offers join or start new", async ({ page }) => {
+  const repository = createMemorySessionRepository();
+  await handleJoinSession(repository, { token: "seed-1", name: "Ada" });
+  await mockSessionApi(page, repository);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/play");
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+
+  await expect(page.getByRole("button", { name: "Join this session" })).toBeVisible();
+  page.once("dialog", (dialog) => {
+    void dialog.accept();
+  });
+  await page.getByRole("button", { name: "Start a new session" }).click();
+  await expect(page.getByRole("button", { name: "Start session" })).toBeVisible();
+});
+
+test.describe("phone play", () => {
+  test.use({
+    userAgent: IPHONE_UA,
+    viewport: { width: 390, height: 844 },
+  });
+
+  test("PLAY-E2E-07 phone home opens the setup wizard", async ({ page }) => {
+    const repository = createMemorySessionRepository();
+    await mockSessionApi(page, repository);
+
+    await page.goto("/");
+    await expect(page).toHaveURL("/play");
+    const nav = page.getByRole("navigation", { name: "Club app" });
+    await expect(nav.getByRole("link", { name: "Play" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Settings" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Board" })).toHaveCount(0);
+    await expect(page.locator(".play-nav-board")).toBeHidden();
+
+    await page.getByRole("button", { name: "Start session" }).click();
+    await page.getByLabel("Your name").fill("Ada");
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Singles or doubles?" })).toBeVisible();
+    await page.getByRole("button", { name: "Singles" }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "How many courts?" })).toBeVisible();
+    await page.getByRole("button", { name: "+" }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+    await page.getByRole("button", { name: "Let's play!" }).click();
+
+    await expect(page.getByRole("heading", { name: "In the pool" })).toBeVisible();
+    await expect(page.getByText("Ada (you)")).toBeVisible();
+    await expect(page.getByText("1 waiting · 2 needed for singles")).toBeVisible();
+  });
 });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { reduceSession } from "./session-reducer";
 import { createDefaultSession } from "./session";
-import { toSessionView } from "./session-view";
+import { isSessionEmpty, toSessionView } from "./session-view";
 
 const T0 = new Date("2026-09-06T12:00:00.000Z");
 const LATER = new Date("2026-09-06T12:12:00.000Z");
@@ -52,5 +52,29 @@ describe("session view", () => {
       waitLabel: "12m",
     });
     expect(view.waitingCount).toBe(1);
+  });
+
+  it("SESSION-EMPTY-01: empty pool has no waiters and no occupied courts", () => {
+    const empty = toSessionView(createDefaultSession(), null, T0);
+    expect(isSessionEmpty(empty)).toBe(true);
+
+    const waiting = toSessionView(
+      reduceSession(
+        createDefaultSession(),
+        { type: "JOIN", token: "p-1", name: "Ada" },
+        T0,
+        Math.random,
+        () => "p-1",
+      ).state,
+      null,
+      T0,
+    );
+    expect(isSessionEmpty(waiting)).toBe(false);
+    expect(
+      isSessionEmpty({
+        waiting: [],
+        courts: [{ occupied: true }],
+      }),
+    ).toBe(false);
   });
 });

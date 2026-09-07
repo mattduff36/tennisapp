@@ -7,19 +7,28 @@ export function NameScreen({
   notice,
   busy,
   claimable,
+  submitLabel = "Join the pool",
   onJoin,
   onClaim,
 }: {
   notice: string | null;
   busy: boolean;
   claimable: boolean;
+  submitLabel?: string;
   onJoin: (name: string) => Promise<void>;
   onClaim: (name: string) => Promise<void>;
 }) {
   const [name, setName] = useState("");
+  const [emptyError, setEmptyError] = useState(false);
+  const errorId = "player-name-error";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!name.trim()) {
+      setEmptyError(true);
+      return;
+    }
+    setEmptyError(false);
     await onJoin(name);
   }
 
@@ -40,18 +49,35 @@ export function NameScreen({
           id="player-name"
           name="name"
           value={name}
-          onChange={(event) => setName(event.target.value)}
+          required
+          aria-invalid={emptyError || undefined}
+          aria-describedby={emptyError ? errorId : undefined}
+          onChange={(event) => {
+            setName(event.target.value);
+            if (emptyError && event.target.value.trim()) {
+              setEmptyError(false);
+            }
+          }}
           autoComplete="nickname"
           autoCapitalize="words"
           maxLength={40}
           placeholder="e.g. Ada"
         />
-        {notice ? <p className="play-notice">{notice}</p> : null}
+        {emptyError ? (
+          <p id={errorId} className="play-notice" role="alert">
+            Enter a name to continue.
+          </p>
+        ) : null}
+        {notice ? (
+          <p className="play-notice" role="status" aria-live="polite">
+            {notice}
+          </p>
+        ) : null}
         {claimable ? (
           <p className="play-lede">That name is on the board. Claim it if it is you.</p>
         ) : null}
         <button type="submit" className="play-primary" disabled={busy}>
-          Join the pool
+          {submitLabel}
         </button>
         {claimable ? (
           <button
