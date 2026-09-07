@@ -1210,6 +1210,8 @@ a {
   grid-template-rows: auto minmax(0, 1fr) auto auto;
   overflow: hidden;
   padding-top: env(safe-area-inset-top, 0px);
+  --play-dock-button-min: 5.5rem;
+  --play-dock-pad-y: var(--space-2);
 }
 
 .play-main {
@@ -1253,8 +1255,8 @@ html[data-device="phone"] .play-nav-board {
 }
 
 .play-dock {
-  padding: var(--space-2) max(var(--space-3), env(safe-area-inset-right, 0px))
-    max(var(--space-2), env(safe-area-inset-bottom, 0px))
+  padding: var(--play-dock-pad-y) max(var(--space-3), env(safe-area-inset-right, 0px))
+    max(var(--play-dock-pad-y), env(safe-area-inset-bottom, 0px))
     max(var(--space-3), env(safe-area-inset-left, 0px));
   background: var(--panel-strong);
   border-top: 1px solid var(--border-subtle);
@@ -1262,6 +1264,32 @@ html[data-device="phone"] .play-nav-board {
 
 .play-dock:empty {
   display: none;
+}
+
+.play-shell[data-keyboard="open"] {
+  padding-top: 0;
+}
+
+.play-shell[data-keyboard="open"] .play-dock {
+  padding-bottom: var(--play-dock-pad-y);
+}
+
+.play-shell[data-keyboard="open"] .play-ticker {
+  display: none;
+}
+
+.play-shell[data-keyboard="open"] .play-main {
+  padding-block: var(--space-2);
+}
+
+.play-shell[data-keyboard="open"] .play-title {
+  font-size: clamp(1.55rem, 6vw, 2.2rem);
+}
+
+.play-shell[data-dock-size="compact"] .play-dock .play-primary,
+.play-shell[data-dock-size="compact"] .play-dock .play-secondary {
+  min-height: var(--play-dock-button-min);
+  font-size: 1.15rem;
 }
 
 .play-cta-hero {

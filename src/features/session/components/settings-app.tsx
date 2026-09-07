@@ -7,6 +7,7 @@ import { clearLegacyPegboardStorage } from "../identity/clear-legacy-storage";
 import { MAX_COURT_COUNT, MIN_COURT_COUNT } from "../model/session";
 import { useSession } from "../hooks/use-session";
 import { PlayNav } from "./play-nav";
+import { PlayShell } from "./play-dock";
 import { SessionTicker } from "./session-ticker";
 
 export function SettingsApp() {
@@ -38,7 +39,7 @@ export function SettingsApp() {
   }
 
   return (
-    <div className="play-shell">
+    <PlayShell>
       <PlayNav />
       <main className="play-main">
         <section className="play-card">
@@ -431,7 +432,7 @@ export function SettingsApp() {
         </section>
       </main>
       {view ? <SessionTicker view={view} /> : null}
-    </div>
+    </PlayShell>
   );
 }
 

@@ -1,7 +1,14 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
+import { usePlayViewport } from "../hooks/use-play-viewport";
 
 const PlayDockTargetContext = createContext<HTMLElement | null>(null);
 
@@ -34,4 +41,21 @@ export function PlayDockFill({ children }: { children: ReactNode }) {
 
 export function PlayDock({ children }: { children: ReactNode }) {
   return <div className="play-dock">{children}</div>;
+}
+
+export function PlayShell({
+  children,
+  dock,
+}: {
+  children: ReactNode;
+  dock?: ReactNode;
+}) {
+  const shellRef = useRef<HTMLDivElement>(null);
+  usePlayViewport(shellRef);
+
+  return (
+    <div className="play-shell" ref={shellRef}>
+      <PlayDockProvider fallback={dock}>{children}</PlayDockProvider>
+    </div>
+  );
 }

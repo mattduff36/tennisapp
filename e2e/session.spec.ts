@@ -192,6 +192,106 @@ test("PLAY-UI-03 wizard and join CTAs sit in the dock; ball is a second start ta
   await expect(page.locator(".play-main").getByRole("button", { name: "Next", exact: true })).toHaveCount(0);
 });
 
+test("PLAY-UI-04 dock rises and shrinks when the keyboard covers the viewport", async ({
+  page,
+}) => {
+  const repository = createMemorySessionRepository();
+  await mockSessionApi(page, repository);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    const listeners = new Set<(event: Event) => void>();
+    let height = window.innerHeight;
+    const visualViewport = {
+      get width() {
+        return window.innerWidth;
+      },
+      get height() {
+        return height;
+      },
+      get offsetTop() {
+        return 0;
+      },
+      get offsetLeft() {
+        return 0;
+      },
+      get scale() {
+        return 1;
+      },
+      addEventListener(_type: string, listener: (event: Event) => void) {
+        listeners.add(listener);
+      },
+      removeEventListener(_type: string, listener: (event: Event) => void) {
+        listeners.delete(listener);
+      },
+      dispatchEvent() {
+        return true;
+      },
+    };
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      value: visualViewport,
+    });
+    Object.assign(window, {
+      __playKeyboard(open: boolean, visualHeight?: number) {
+        height = open
+          ? (visualHeight ?? Math.round(window.innerHeight * 0.52))
+          : window.innerHeight;
+        listeners.forEach((listener) => listener(new Event("resize")));
+      },
+    });
+  });
+
+  await page.goto("/play");
+  await page.locator(".play-main").getByRole("button", { name: "Start session" }).click();
+  await page.getByLabel("Your name").click();
+
+  const shell = page.locator(".play-shell");
+  await expect(shell).toHaveAttribute("data-keyboard", "closed");
+
+  await page.evaluate(() => {
+    (
+      window as unknown as { __playKeyboard: (open: boolean, height?: number) => void }
+    ).__playKeyboard(true, 470);
+  });
+
+  await expect(shell).toHaveAttribute("data-keyboard", "open");
+  await expect(shell).toHaveAttribute("data-dock-size", "compact");
+  await expect(playDock(page).getByRole("button", { name: "Next", exact: true })).toBeVisible();
+
+  const tight = await page.evaluate(() => {
+    const shellEl = document.querySelector(".play-shell");
+    const dockEl = document.querySelector(".play-dock");
+    if (!(shellEl instanceof HTMLElement) || !(dockEl instanceof HTMLElement)) {
+      throw new Error("missing play chrome");
+    }
+    const shellBox = shellEl.getBoundingClientRect();
+    const dockBox = dockEl.getBoundingClientRect();
+    return {
+      shellHeight: Math.round(shellBox.height),
+      dockBottom: dockBox.bottom,
+      shellBottom: shellBox.bottom,
+      buttonMin: getComputedStyle(shellEl).getPropertyValue("--play-dock-button-min").trim(),
+    };
+  });
+  expect(tight.shellHeight).toBe(470);
+  expect(tight.dockBottom).toBeLessThanOrEqual(tight.shellBottom + 1);
+  expect(tight.buttonMin).toBe("64px");
+
+  await page.evaluate(() => {
+    (
+      window as unknown as { __playKeyboard: (open: boolean, height?: number) => void }
+    ).__playKeyboard(true, 580);
+  });
+  await expect(shell).toHaveAttribute("data-dock-size", "full");
+
+  await page.evaluate(() => {
+    (window as unknown as { __playKeyboard: (open: boolean) => void }).__playKeyboard(false);
+  });
+  await expect(shell).toHaveAttribute("data-keyboard", "closed");
+  await expect(shell).toHaveAttribute("data-dock-size", "full");
+});
+
 test("PLAY-UI-02 in-app nav stays inside Board / Play / Settings", async ({
   page,
 }) => {

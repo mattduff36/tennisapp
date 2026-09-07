@@ -14,5 +14,11 @@ describe("play dock layout CSS", () => {
       /\.play-shell\s*\{[\s\S]*?grid-template-rows:\s*auto\s+minmax\(0,\s*1fr\)\s+auto\s+auto/,
     );
     expect(css).toMatch(/\.play-dock:empty\s*\{[\s\S]*?display:\s*none/);
+    expect(css).toMatch(
+      /\.play-shell\[data-keyboard="open"\] \.play-ticker\s*\{[\s\S]*?display:\s*none/,
+    );
+    expect(css).toMatch(
+      /\.play-shell\[data-dock-size="compact"\] \.play-dock \.play-primary[\s\S]*?min-height:\s*var\(--play-dock-button-min\)/,
+    );
   });
 });
