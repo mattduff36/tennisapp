@@ -2,6 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 import { TennisBall } from "@/features/pegboard/graphics/tennis-ball";
+import { PlayDockFill } from "./play-dock";
+
+export const PLAYER_NAME_FORM_ID = "player-name-form";
 
 export function NameScreen({
   notice,
@@ -41,7 +44,7 @@ export function NameScreen({
       <h1 className="play-title">
         {claimable ? "Is that you?" : "What is your name?"}
       </h1>
-      <form className="play-form" onSubmit={handleSubmit}>
+      <form id={PLAYER_NAME_FORM_ID} className="play-form" onSubmit={handleSubmit}>
         <label className="scoreboard-label" htmlFor="player-name">
           Your name
         </label>
@@ -76,20 +79,29 @@ export function NameScreen({
         {claimable ? (
           <p className="play-lede">That name is on the board. Claim it if it is you.</p>
         ) : null}
-        <button type="submit" className="play-primary" disabled={busy}>
-          {submitLabel}
-        </button>
-        {claimable ? (
-          <button
-            type="button"
-            className="play-secondary"
-            disabled={busy}
-            onClick={() => void onClaim(name)}
-          >
-            Claim this name
-          </button>
-        ) : null}
       </form>
+      <PlayDockFill>
+        <div className="play-dock-stack">
+          <button
+            type="submit"
+            form={PLAYER_NAME_FORM_ID}
+            className="play-primary"
+            disabled={busy}
+          >
+            {submitLabel}
+          </button>
+          {claimable ? (
+            <button
+              type="button"
+              className="play-secondary"
+              disabled={busy}
+              onClick={() => void onClaim(name)}
+            >
+              Claim this name
+            </button>
+          ) : null}
+        </div>
+      </PlayDockFill>
     </section>
   );
 }

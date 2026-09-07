@@ -1,5 +1,6 @@
 import { TennisBall } from "@/features/pegboard/graphics/tennis-ball";
-import { PinUnlockField } from "./pin-unlock-field";
+import { PIN_UNLOCK_FORM_ID, PinUnlockField } from "./pin-unlock-field";
+import { PlayDockFill } from "./play-dock";
 
 export function SessionGate({
   notice,
@@ -30,27 +31,44 @@ export function SessionGate({
         </p>
       ) : null}
       {awaitingPin ? (
-        <PinUnlockField busy={busy} notice={notice} onUnlock={onUnlock} />
-      ) : (
-        <div className="play-form">
+        <PinUnlockField
+          busy={busy}
+          notice={notice}
+          onUnlock={onUnlock}
+          showSubmit={false}
+        />
+      ) : null}
+      <PlayDockFill>
+        {awaitingPin ? (
           <button
-            type="button"
+            type="submit"
+            form={PIN_UNLOCK_FORM_ID}
             className="play-primary"
             disabled={busy}
-            onClick={onJoin}
           >
-            Join this session
+            Unlock
           </button>
-          <button
-            type="button"
-            className="play-secondary"
-            disabled={busy}
-            onClick={onStartNew}
-          >
-            Start a new session
-          </button>
-        </div>
-      )}
+        ) : (
+          <div className="play-dock-stack">
+            <button
+              type="button"
+              className="play-primary"
+              disabled={busy}
+              onClick={onJoin}
+            >
+              Join this session
+            </button>
+            <button
+              type="button"
+              className="play-secondary"
+              disabled={busy}
+              onClick={onStartNew}
+            >
+              Start a new session
+            </button>
+          </div>
+        )}
+      </PlayDockFill>
     </section>
   );
 }

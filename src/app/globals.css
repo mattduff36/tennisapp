@@ -1260,6 +1260,16 @@ html[data-device="phone"] .play-nav-board {
   border-top: 1px solid var(--border-subtle);
 }
 
+.play-dock:empty {
+  display: none;
+}
+
+.play-cta-hero {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .play-dock-stack {
   display: grid;
   gap: var(--space-2);

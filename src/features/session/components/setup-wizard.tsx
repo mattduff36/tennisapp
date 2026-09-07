@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   MAX_COURT_COUNT,
   MIN_COURT_COUNT,
@@ -9,7 +9,8 @@ import {
 import type { SessionView } from "../model/session-view";
 import { BallActionButton } from "./ball-action-button";
 import { NameScreen } from "./name-screen";
-import { PinUnlockField } from "./pin-unlock-field";
+import { PIN_UNLOCK_FORM_ID, PinUnlockField } from "./pin-unlock-field";
+import { PlayDockFill } from "./play-dock";
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 
@@ -35,6 +36,61 @@ export function SetupWizard({
   const [gameMode, setGameMode] = useState<GameMode>(view.settings.gameMode);
   const [courtCount, setCourtCount] = useState(view.settings.courtCount);
   const locked = view.settings.pinEnabled && !view.settings.unlocked;
+  const canFinish = !busy && name.trim().length > 0;
+
+  let dock: ReactNode = null;
+  if (step === 1) {
+    dock = (
+      <button
+        type="button"
+        className="play-primary play-cta-hero"
+        disabled={busy}
+        onClick={() => setStep(2)}
+      >
+        Start session
+      </button>
+    );
+  } else if (step === 3) {
+    dock = (
+      <WizardNav busy={busy} onBack={() => setStep(2)} onNext={() => setStep(4)} />
+    );
+  } else if (step === 4) {
+    dock = (
+      <WizardNav busy={busy} onBack={() => setStep(3)} onNext={() => setStep(5)} />
+    );
+  } else if (step === 5) {
+    dock = (
+      <div className="play-button-row">
+        {locked ? (
+          <button
+            type="submit"
+            form={PIN_UNLOCK_FORM_ID}
+            className="play-primary"
+            disabled={busy}
+          >
+            Unlock
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="play-primary play-cta-hero"
+            disabled={!canFinish}
+            onClick={() => void onFinish({ name, gameMode, courtCount })}
+          >
+            Let&apos;s play!
+          </button>
+        )}
+        <button
+          type="button"
+          className="play-secondary"
+          disabled={busy}
+          onClick={() => setStep(4)}
+        >
+          Back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={step === 1 || step === 5 ? "play-wizard-hero" : undefined}>
@@ -98,11 +154,6 @@ export function SetupWizard({
           <p className="play-lede">
             {gameMode === "singles" ? "2" : "4"} players per court
           </p>
-          <WizardNav
-            busy={busy}
-            onBack={() => setStep(2)}
-            onNext={() => setStep(4)}
-          />
         </section>
       ) : null}
 
@@ -131,11 +182,6 @@ export function SetupWizard({
               +
             </button>
           </div>
-          <WizardNav
-            busy={busy}
-            onBack={() => setStep(3)}
-            onNext={() => setStep(5)}
-          />
         </section>
       ) : null}
 
@@ -148,24 +194,23 @@ export function SetupWizard({
             </p>
           ) : null}
           {locked ? (
-            <PinUnlockField busy={busy} notice={notice} onUnlock={onUnlock} />
+            <PinUnlockField
+              busy={busy}
+              notice={notice}
+              onUnlock={onUnlock}
+              showSubmit={false}
+            />
           ) : (
             <BallActionButton
               label="Let's play!"
-              disabled={busy || name.trim().length === 0}
+              disabled={!canFinish}
               onClick={() => void onFinish({ name, gameMode, courtCount })}
             />
           )}
-          <button
-            type="button"
-            className="play-secondary"
-            disabled={busy}
-            onClick={() => setStep(4)}
-          >
-            Back
-          </button>
         </section>
       ) : null}
+
+      {dock ? <PlayDockFill>{dock}</PlayDockFill> : null}
     </div>
   );
 }

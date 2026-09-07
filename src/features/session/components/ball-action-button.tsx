@@ -14,10 +14,10 @@ export function BallActionButton({
       type="button"
       className="play-ball-action"
       disabled={disabled}
+      aria-label={label}
       onClick={onClick}
     >
       <TennisBall className="play-ball-action-icon" decorative />
-      <span>{label}</span>
     </button>
   );
 }

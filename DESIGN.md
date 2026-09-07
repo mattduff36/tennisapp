@@ -29,7 +29,7 @@ Working grass tennis court. The tablet board *is* the court: saturated green pla
 - Player tiles with inline tennis-ball SVG
 - Large pill buttons (≥48px tablet; `.play-primary` ~88px on phone)
 - Quiet Board / Play / Settings top nav on every surface
-- Phone action dock for Players ready / Leave / I'm done
+- Phone action dock for wizard, join, Players ready / Leave / I'm done
 - Scrolling session ticker
 - Visible focus ring `--focus`
 
@@ -37,7 +37,7 @@ Working grass tennis court. The tablet board *is* the court: saturated green pla
 
 - `.play-shell` is the viewport (`100dvh`): top nav, scrolling main, ticker, dock
 - `html` / `body` stay `overflow: hidden` for the tablet board
-- Name, waiting, and assignment screens keep primary actions in the dock except Join
+- Wizard, join, name, waiting, and assignment screens keep primary actions in the dock; the wizard tennis ball is a second Start session / Let's play target
 - From `900px`, Play uses two columns (pool or assignment | court summary) and Settings uses two, then three from `1200px` (Display+Game | Courts | Players)
 
 ## Tablet / desktop board

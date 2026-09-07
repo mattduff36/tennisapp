@@ -2,14 +2,18 @@
 
 import { useState, type FormEvent } from "react";
 
+export const PIN_UNLOCK_FORM_ID = "pin-unlock-form";
+
 export function PinUnlockField({
   busy,
   notice,
   onUnlock,
+  showSubmit = true,
 }: {
   busy: boolean;
   notice: string | null;
   onUnlock: (pin: string) => Promise<void>;
+  showSubmit?: boolean;
 }) {
   const [pin, setPin] = useState("");
 
@@ -19,7 +23,7 @@ export function PinUnlockField({
   }
 
   return (
-    <form className="play-form" onSubmit={handleSubmit}>
+    <form id={PIN_UNLOCK_FORM_ID} className="play-form" onSubmit={handleSubmit}>
       <p className="play-lede">Unlock Settings with the club PIN first.</p>
       <label className="scoreboard-label" htmlFor="wizard-unlock-pin">
         Club PIN
@@ -36,9 +40,11 @@ export function PinUnlockField({
           {notice}
         </p>
       ) : null}
-      <button type="submit" className="play-primary" disabled={busy}>
-        Unlock
-      </button>
+      {showSubmit ? (
+        <button type="submit" className="play-primary" disabled={busy}>
+          Unlock
+        </button>
+      ) : null}
     </form>
   );
 }

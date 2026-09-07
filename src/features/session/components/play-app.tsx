@@ -13,7 +13,7 @@ import type { GameMode } from "../model/session";
 import { isSessionEmpty } from "../model/session-view";
 import { AssignmentScreen } from "./assignment-screen";
 import { NameScreen } from "./name-screen";
-import { PlayDock } from "./play-dock";
+import { PlayDockProvider } from "./play-dock";
 import { PlayNav } from "./play-nav";
 import { SessionGate } from "./session-gate";
 import { SessionSummary } from "./session-summary";
@@ -307,10 +307,11 @@ export function PlayApp() {
 
   return (
     <div className="play-shell">
-      <PlayNav />
-      <main className="play-main">{main}</main>
-      {view ? <SessionTicker view={view} /> : null}
-      {dock ? <PlayDock>{dock}</PlayDock> : null}
+      <PlayDockProvider fallback={dock}>
+        <PlayNav />
+        <main className="play-main">{main}</main>
+        {view ? <SessionTicker view={view} /> : null}
+      </PlayDockProvider>
     </div>
   );
 }
