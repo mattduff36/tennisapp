@@ -13,7 +13,7 @@ import type { GameMode } from "../model/session";
 import { isSessionEmpty } from "../model/session-view";
 import { AssignmentScreen } from "./assignment-screen";
 import { NameScreen } from "./name-screen";
-import { PlayShell } from "./play-dock";
+import { PlayDockPair, PlayShell } from "./play-dock";
 import { PlayNav } from "./play-nav";
 import { SessionGate } from "./session-gate";
 import { SessionSummary } from "./session-summary";
@@ -26,7 +26,9 @@ export function PlayApp() {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [claimable, setClaimable] = useState(false);
+  const [claimName, setClaimName] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [joinName, setJoinName] = useState("");
   const [awaitingPin, setAwaitingPin] = useState(false);
   const session = useSession(identity?.token ?? null);
 
@@ -41,7 +43,9 @@ export function PlayApp() {
         name: result.body.me.name,
       });
       setClaimable(false);
+      setClaimName(null);
       setJoining(false);
+      setJoinName("");
     }
   }
 
@@ -53,6 +57,7 @@ export function PlayApp() {
         ? result.body.error
         : null;
     setClaimable(error === "name_unclaimed");
+    setClaimName(error === "name_unclaimed" ? name.trim() : null);
     await persistJoin(next.token, result);
   }
 
@@ -203,47 +208,55 @@ export function PlayApp() {
   } else if (inPool && view) {
     dock = confirming ? (
       <div className="play-dock-stack">
-            <p className="play-lede">
-              {readyConfirmCopy(view.settings.readyRule, "phone")}
-            </p>
-        <div className="play-button-row">
-          <button
-            type="button"
-            className="play-primary"
-            disabled={busy}
-            onClick={() => void handleReady()}
-          >
-            Yes, players ready
-          </button>
+        <p className="play-lede">
+          {readyConfirmCopy(view.settings.readyRule, "phone")}
+        </p>
+        <PlayDockPair
+          leading={
+            <button
+              type="button"
+              className="play-secondary"
+              disabled={busy}
+              onClick={() => setConfirming(false)}
+            >
+              Cancel
+            </button>
+          }
+          action={
+            <button
+              type="button"
+              className="play-primary"
+              disabled={busy}
+              onClick={() => void handleReady()}
+            >
+              Yes, players ready
+            </button>
+          }
+        />
+      </div>
+    ) : (
+      <PlayDockPair
+        leading={
           <button
             type="button"
             className="play-secondary"
             disabled={busy}
-            onClick={() => setConfirming(false)}
+            onClick={() => void handleLeave()}
           >
-            Cancel
+            Leave
           </button>
-        </div>
-      </div>
-    ) : (
-      <div className="play-button-row">
-        <button
-          type="button"
-          className="play-primary"
-          disabled={busy || !view.canStart}
-          onClick={() => setConfirming(true)}
-        >
-          {readyButtonLabel(view)}
-        </button>
-        <button
-          type="button"
-          className="play-secondary"
-          disabled={busy}
-          onClick={() => void handleLeave()}
-        >
-          Leave
-        </button>
-      </div>
+        }
+        action={
+          <button
+            type="button"
+            className="play-primary"
+            disabled={busy || !view.canStart}
+            onClick={() => setConfirming(true)}
+          >
+            {readyButtonLabel(view)}
+          </button>
+        }
+      />
     );
   }
 
@@ -285,6 +298,10 @@ export function PlayApp() {
           notice={session.notice}
           busy={busy}
           claimable={claimable}
+          claimName={claimName}
+          initialName={joinName}
+          onBack={() => setJoining(false)}
+          onNameChange={setJoinName}
           onJoin={handleJoin}
           onClaim={handleClaim}
         />

@@ -24,7 +24,7 @@ export function PinUnlockField({
 
   return (
     <form id={PIN_UNLOCK_FORM_ID} className="play-form" onSubmit={handleSubmit}>
-      <p className="play-lede">Unlock Settings with the club PIN first.</p>
+      <p className="play-lede">Enter the club PIN to continue.</p>
       <label className="scoreboard-label" htmlFor="wizard-unlock-pin">
         Club PIN
       </label>

@@ -7,7 +7,7 @@ import { clearLegacyPegboardStorage } from "../identity/clear-legacy-storage";
 import { MAX_COURT_COUNT, MIN_COURT_COUNT } from "../model/session";
 import { useSession } from "../hooks/use-session";
 import { PlayNav } from "./play-nav";
-import { PlayShell } from "./play-dock";
+import { PlayDockPair, PlayShell } from "./play-dock";
 import { SessionTicker } from "./session-ticker";
 
 export function SettingsApp() {
@@ -219,7 +219,43 @@ export function SettingsApp() {
                             }))
                           }
                         />
-                        <div className="play-button-row">
+                        {court.occupied ? (
+                          <PlayDockPair
+                            leading={
+                              <button
+                                type="button"
+                                className="play-secondary"
+                                disabled={busy}
+                                onClick={() =>
+                                  run(() => session.done({ courtId: court.id }))
+                                }
+                              >
+                                Clear court
+                              </button>
+                            }
+                            action={
+                              <button
+                                type="button"
+                                className="play-secondary"
+                                disabled={busy}
+                                onClick={() =>
+                                  run(() =>
+                                    session.saveSettings({
+                                      courts: [
+                                        {
+                                          id: court.id,
+                                          name: courtNames[court.id] ?? court.name,
+                                        },
+                                      ],
+                                    }),
+                                  )
+                                }
+                              >
+                                Save name
+                              </button>
+                            }
+                          />
+                        ) : (
                           <button
                             type="button"
                             className="play-secondary"
@@ -239,19 +275,7 @@ export function SettingsApp() {
                           >
                             Save name
                           </button>
-                          {court.occupied ? (
-                            <button
-                              type="button"
-                              className="play-secondary"
-                              disabled={busy}
-                              onClick={() =>
-                                run(() => session.done({ courtId: court.id }))
-                              }
-                            >
-                              Clear court
-                            </button>
-                          ) : null}
-                        </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -342,42 +366,46 @@ export function SettingsApp() {
                         value={newPin}
                         onChange={(event) => setNewPin(event.target.value)}
                       />
-                      <div className="play-button-row">
-                        <button
-                          type="button"
-                          className="play-secondary"
-                          disabled={busy}
-                          onClick={() =>
-                            run(async () => {
-                              await session.updatePin({
-                                action: "change",
-                                currentPin,
-                                pin: newPin,
-                              });
-                              setCurrentPin("");
-                              setNewPin("");
-                            })
-                          }
-                        >
-                          Change PIN
-                        </button>
-                        <button
-                          type="button"
-                          className="play-danger"
-                          disabled={busy}
-                          onClick={() =>
-                            run(async () => {
-                              await session.updatePin({
-                                action: "disable",
-                                currentPin,
-                              });
-                              setCurrentPin("");
-                            })
-                          }
-                        >
-                          Turn PIN off
-                        </button>
-                      </div>
+                      <PlayDockPair
+                        leading={
+                          <button
+                            type="button"
+                            className="play-danger"
+                            disabled={busy}
+                            onClick={() =>
+                              run(async () => {
+                                await session.updatePin({
+                                  action: "disable",
+                                  currentPin,
+                                });
+                                setCurrentPin("");
+                              })
+                            }
+                          >
+                            Turn PIN off
+                          </button>
+                        }
+                        action={
+                          <button
+                            type="button"
+                            className="play-secondary"
+                            disabled={busy}
+                            onClick={() =>
+                              run(async () => {
+                                await session.updatePin({
+                                  action: "change",
+                                  currentPin,
+                                  pin: newPin,
+                                });
+                                setCurrentPin("");
+                                setNewPin("");
+                              })
+                            }
+                          >
+                            Change PIN
+                          </button>
+                        }
+                      />
                     </>
                   ) : (
                     <>
@@ -466,7 +494,34 @@ function PlayerEditor({
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
         />
-        <div className="play-button-row">
+        {canRemove ? (
+          <PlayDockPair
+            leading={
+              <button
+                type="button"
+                className="play-secondary"
+                disabled={busy}
+                onClick={() => {
+                  if (window.confirm(`Remove ${name} from the pool?`)) {
+                    onRemove();
+                  }
+                }}
+              >
+                Remove
+              </button>
+            }
+            action={
+              <button
+                type="button"
+                className="play-secondary"
+                disabled={busy}
+                onClick={() => onRename(draft)}
+              >
+                Save name
+              </button>
+            }
+          />
+        ) : (
           <button
             type="button"
             className="play-secondary"
@@ -475,21 +530,7 @@ function PlayerEditor({
           >
             Save name
           </button>
-          {canRemove ? (
-            <button
-              type="button"
-              className="play-secondary"
-              disabled={busy}
-              onClick={() => {
-                if (window.confirm(`Remove ${name} from the pool?`)) {
-                  onRemove();
-                }
-              }}
-            >
-              Remove
-            </button>
-          ) : null}
-        </div>
+        )}
       </div>
     </div>
   );

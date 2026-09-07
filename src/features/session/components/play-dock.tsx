@@ -43,6 +43,21 @@ export function PlayDock({ children }: { children: ReactNode }) {
   return <div className="play-dock">{children}</div>;
 }
 
+export function PlayDockPair({
+  leading,
+  action,
+}: {
+  leading: ReactNode;
+  action: ReactNode;
+}) {
+  return (
+    <div className="play-button-row">
+      {leading}
+      {action}
+    </div>
+  );
+}
+
 export function PlayShell({
   children,
   dock,

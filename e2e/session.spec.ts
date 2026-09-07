@@ -13,6 +13,21 @@ function playDock(page: Page) {
   return page.locator(".play-dock");
 }
 
+async function expectActionOnRight(
+  page: Page,
+  leadingName: string,
+  actionName: string,
+) {
+  const dock = playDock(page);
+  const leading = dock.getByRole("button", { name: leadingName });
+  const action = dock.getByRole("button", { name: actionName });
+  const leadingBox = await leading.boundingBox();
+  const actionBox = await action.boundingBox();
+  expect(leadingBox).toBeTruthy();
+  expect(actionBox).toBeTruthy();
+  expect(leadingBox!.x).toBeLessThan(actionBox!.x);
+}
+
 async function openJoinForm(page: Page) {
   await playDock(page).getByRole("button", { name: "Join this session" }).click();
 }
@@ -37,6 +52,7 @@ test("PLAY-E2E-01 name → lobby → ready → assignment copy", async ({ page }
   await expect(page.getByRole("heading", { name: "In the pool" })).toBeVisible();
   await expect(page.getByText("Ada (you)")).toBeVisible();
   await page.getByRole("button", { name: "Players ready" }).click();
+  await expectActionOnRight(page, "Cancel", "Yes, players ready");
   await page.getByRole("button", { name: "Yes, players ready" }).click();
 
   await expect(page.getByRole("heading", { name: "Court 1" })).toBeVisible();
@@ -62,6 +78,7 @@ test("PLAY-E2E-05 helper-added name can be claimed", async ({ page }) => {
   await page.getByLabel("Your name").fill("Ada");
   await page.getByRole("button", { name: "Join the pool" }).click();
   await expect(page.getByRole("heading", { name: "Is that you?" })).toBeVisible();
+  await expectActionOnRight(page, "Back", "Claim this name");
   await page.getByRole("button", { name: "Claim this name" }).click();
   await expect(page.getByRole("heading", { name: "In the pool" })).toBeVisible();
   await expect(page.getByText("Ada (you)")).toBeVisible();
@@ -100,8 +117,9 @@ test("PLAY-E2E-03 stale remembered token returns to the setup wizard", async ({
     );
   });
   await page.goto("/play");
+  await expect(page.getByRole("heading", { name: "Welcome" })).toBeVisible();
   await expect(playDock(page).getByRole("button", { name: "Start session" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Start session" })).toHaveCount(2);
+  await expect(page.getByRole("button", { name: "Start session" })).toHaveCount(1);
   await expect(page.getByText(/no longer in the pool/i)).toBeVisible();
 });
 
@@ -168,11 +186,10 @@ test("PLAY-UI-01 Play/Settings in top nav; Players ready/Leave in bottom dock", 
   const dock = playDock(page);
   await expect(dock.getByRole("button", { name: "Need 2 more" })).toBeVisible();
   await expect(dock.getByRole("button", { name: "Leave" })).toBeVisible();
+  await expectActionOnRight(page, "Leave", "Need 2 more");
 });
 
-test("PLAY-UI-03 wizard and join CTAs sit in the dock; ball is a second start target", async ({
-  page,
-}) => {
+test("PLAY-UI-03 wizard and join CTAs sit in the dock", async ({ page }) => {
   const repository = createMemorySessionRepository();
   await mockSessionApi(page, repository);
 
@@ -180,16 +197,22 @@ test("PLAY-UI-03 wizard and join CTAs sit in the dock; ball is a second start ta
   await page.goto("/play");
 
   const dock = playDock(page);
+  await expect(page.getByRole("heading", { name: "Welcome" })).toBeVisible();
   await expect(dock.getByRole("button", { name: "Start session" })).toBeVisible();
-  await expect(page.locator(".play-main").getByRole("button", { name: "Start session" })).toBeVisible();
-  await expect(page.locator(".play-main").getByRole("button", { name: "Start session" })).toHaveClass(
-    /play-ball-action/,
-  );
+  await expect(page.locator(".play-main").getByRole("button", { name: "Start session" })).toHaveCount(0);
+  await expect(page.locator(".play-ball-action")).toHaveCount(0);
 
-  await page.locator(".play-main").getByRole("button", { name: "Start session" }).click();
+  await dock.getByRole("button", { name: "Start session" }).click();
   await expect(page.getByRole("heading", { name: "What is your name?" })).toBeVisible();
+  await page.getByLabel("Your name").fill("Ada");
+  await expect(dock.getByRole("button", { name: "Back" })).toBeVisible();
   await expect(dock.getByRole("button", { name: "Next", exact: true })).toBeVisible();
   await expect(page.locator(".play-main").getByRole("button", { name: "Next", exact: true })).toHaveCount(0);
+  await expectActionOnRight(page, "Back", "Next");
+  await dock.getByRole("button", { name: "Back" }).click();
+  await expect(page.getByRole("heading", { name: "Welcome" })).toBeVisible();
+  await dock.getByRole("button", { name: "Start session" }).click();
+  await expect(page.getByLabel("Your name")).toHaveValue("Ada");
 });
 
 test("PLAY-UI-04 dock rises and shrinks when the keyboard covers the viewport", async ({
@@ -243,7 +266,7 @@ test("PLAY-UI-04 dock rises and shrinks when the keyboard covers the viewport", 
   });
 
   await page.goto("/play");
-  await page.locator(".play-main").getByRole("button", { name: "Start session" }).click();
+  await playDock(page).getByRole("button", { name: "Start session" }).click();
   await page.getByLabel("Your name").click();
 
   const shell = page.locator(".play-shell");
@@ -312,6 +335,29 @@ test("PLAY-UI-02 in-app nav stays inside Board / Play / Settings", async ({
   await expect(playDock(page).getByRole("button", { name: "Start session" })).toBeVisible();
 });
 
+test("PLAY-UI-08 join name Back returns to the live session gate", async ({
+  page,
+}) => {
+  const repository = createMemorySessionRepository();
+  await handleJoinSession(repository, { token: "seed-1", name: "Ada" });
+  await mockSessionApi(page, repository);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/play");
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+
+  await openJoinForm(page);
+  await expect(page.getByRole("heading", { name: "What is your name?" })).toBeVisible();
+  await page.getByLabel("Your name").fill("Ada");
+  await expectActionOnRight(page, "Back", "Join the pool");
+  await playDock(page).getByRole("button", { name: "Back" }).click();
+  await expect(page.getByRole("heading", { name: "Session is on" })).toBeVisible();
+  await expect(playDock(page).getByRole("button", { name: "Join this session" })).toBeVisible();
+  await openJoinForm(page);
+  await expect(page.getByLabel("Your name")).toHaveValue("Ada");
+});
+
 test("PLAY-E2E-08 live pool offers join or start new", async ({ page }) => {
   const repository = createMemorySessionRepository();
   await handleJoinSession(repository, { token: "seed-1", name: "Ada" });
@@ -357,6 +403,11 @@ test.describe("phone play", () => {
     await expect(page.getByRole("heading", { name: "How many courts?" })).toBeVisible();
     await page.getByRole("button", { name: "+" }).click();
     await playDock(page).getByRole("button", { name: "Next", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Ready" })).toBeVisible();
+    await expect(page.getByText("Ada", { exact: true })).toBeVisible();
+    await expect(page.getByText("Singles · 2 per court")).toBeVisible();
+    await expect(page.getByText("4 courts")).toBeVisible();
+    await expectActionOnRight(page, "Back", "Let's play!");
     await playDock(page).getByRole("button", { name: "Let's play!" }).click();
 
     await expect(page.getByRole("heading", { name: "In the pool" })).toBeVisible();

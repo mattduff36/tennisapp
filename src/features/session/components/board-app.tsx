@@ -13,6 +13,7 @@ import {
   readyButtonLabel,
   readyConfirmCopy,
 } from "../model/session-copy";
+import { PlayDockPair } from "./play-dock";
 import { PlayNav } from "./play-nav";
 import { SessionCourtCard } from "./session-court-card";
 import { SessionTicker } from "./session-ticker";
@@ -182,24 +183,28 @@ export function BoardApp() {
                   "board",
                 )}
               </p>
-              <div className="play-button-row">
-                <button
-                  type="button"
-                  className="play-primary"
-                  disabled={busy}
-                  onClick={() => void handleReady()}
-                >
-                  Yes, players ready
-                </button>
-                <button
-                  type="button"
-                  className="play-secondary"
-                  disabled={busy}
-                  onClick={() => setConfirming(false)}
-                >
-                  Cancel
-                </button>
-              </div>
+              <PlayDockPair
+                leading={
+                  <button
+                    type="button"
+                    className="play-secondary"
+                    disabled={busy}
+                    onClick={() => setConfirming(false)}
+                  >
+                    Cancel
+                  </button>
+                }
+                action={
+                  <button
+                    type="button"
+                    className="play-primary"
+                    disabled={busy}
+                    onClick={() => void handleReady()}
+                  >
+                    Yes, players ready
+                  </button>
+                }
+              />
             </div>
           ) : (
             <button

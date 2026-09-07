@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
 import { TennisBall } from "@/features/pegboard/graphics/tennis-ball";
-import { PlayDockFill } from "./play-dock";
+import { useState, type FormEvent } from "react";
+import { PlayDockFill, PlayDockPair } from "./play-dock";
 
 export const PLAYER_NAME_FORM_ID = "player-name-form";
 
@@ -10,20 +10,29 @@ export function NameScreen({
   notice,
   busy,
   claimable,
+  claimName = null,
+  initialName = "",
   submitLabel = "Join the pool",
+  onBack,
+  onNameChange,
   onJoin,
   onClaim,
 }: {
   notice: string | null;
   busy: boolean;
   claimable: boolean;
+  claimName?: string | null;
+  initialName?: string;
   submitLabel?: string;
+  onBack?: () => void;
+  onNameChange?: (name: string) => void;
   onJoin: (name: string) => Promise<void>;
   onClaim: (name: string) => Promise<void>;
 }) {
-  const [name, setName] = useState("");
+  const [name, setName] = useState(initialName);
   const [emptyError, setEmptyError] = useState(false);
   const errorId = "player-name-error";
+  const canClaim = Boolean(claimable && claimName && name.trim() === claimName);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,8 +41,45 @@ export function NameScreen({
       return;
     }
     setEmptyError(false);
+    if (canClaim) {
+      await onClaim(name);
+      return;
+    }
     await onJoin(name);
   }
+
+  const backButton = onBack ? (
+    <button
+      type="button"
+      className="play-secondary"
+      disabled={busy}
+      onClick={onBack}
+    >
+      Back
+    </button>
+  ) : null;
+
+  const joinButton = (
+    <button
+      type="submit"
+      form={PLAYER_NAME_FORM_ID}
+      className={canClaim ? "play-secondary" : "play-primary"}
+      disabled={busy}
+    >
+      {submitLabel}
+    </button>
+  );
+
+  const claimButton = (
+    <button
+      type="submit"
+      form={PLAYER_NAME_FORM_ID}
+      className="play-primary"
+      disabled={busy}
+    >
+      Claim this name
+    </button>
+  );
 
   return (
     <section className="play-card">
@@ -42,7 +88,7 @@ export function NameScreen({
         <p className="scoreboard-label">Club session</p>
       </div>
       <h1 className="play-title">
-        {claimable ? "Is that you?" : "What is your name?"}
+        {canClaim ? "Is that you?" : "What is your name?"}
       </h1>
       <form id={PLAYER_NAME_FORM_ID} className="play-form" onSubmit={handleSubmit}>
         <label className="scoreboard-label" htmlFor="player-name">
@@ -56,8 +102,10 @@ export function NameScreen({
           aria-invalid={emptyError || undefined}
           aria-describedby={emptyError ? errorId : undefined}
           onChange={(event) => {
-            setName(event.target.value);
-            if (emptyError && event.target.value.trim()) {
+            const next = event.target.value;
+            setName(next);
+            onNameChange?.(next);
+            if (emptyError && next.trim()) {
               setEmptyError(false);
             }
           }}
@@ -76,31 +124,20 @@ export function NameScreen({
             {notice}
           </p>
         ) : null}
-        {claimable ? (
+        {canClaim ? (
           <p className="play-lede">That name is on the board. Claim it if it is you.</p>
         ) : null}
       </form>
       <PlayDockFill>
-        <div className="play-dock-stack">
-          <button
-            type="submit"
-            form={PLAYER_NAME_FORM_ID}
-            className="play-primary"
-            disabled={busy}
-          >
-            {submitLabel}
-          </button>
-          {claimable ? (
-            <button
-              type="button"
-              className="play-secondary"
-              disabled={busy}
-              onClick={() => void onClaim(name)}
-            >
-              Claim this name
-            </button>
-          ) : null}
-        </div>
+        {canClaim && backButton ? (
+          <PlayDockPair leading={backButton} action={claimButton} />
+        ) : canClaim ? (
+          <PlayDockPair leading={joinButton} action={claimButton} />
+        ) : backButton ? (
+          <PlayDockPair leading={backButton} action={joinButton} />
+        ) : (
+          joinButton
+        )}
       </PlayDockFill>
     </section>
   );
